@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Mud Crab Stock Assessment</title>
+<style>
+  :root{
+    --mangrove-dark:#1B2E28;
+    --mangrove-mid:#2D4A3E;
+    --sand:#F5F1E8;
+    --sand-dim:#EAE3D3;
+    --shell:#C4622D;
+    --shell-dim:#a3521f;
+    --tide:#4A6670;
+    --alert:#B23A3A;
+    --ink:#20261F;
+    --paper:#FFFFFF;
+    --line:#D8D0BC;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--sand); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-tap-highlight-color:transparent;
+    padding-bottom:90px;
+  }
+  h1,h2,h3{ font-family:Georgia,"Times New Roman",serif; margin:0 0 4px 0; }
+  .eyebrow{ text-transform:uppercase; letter-spacing:1.5px; font-size:0.68rem; font-weight:700; color:var(--tide); margin-bottom:2px; }
+
+  #statusbar{
+    position:sticky; top:0; z-index:60; display:flex; align-items:center; justify-content:space-between;
+    padding:9px 14px; font-size:0.8rem; font-weight:600; color:var(--sand); background:var(--mangrove-mid);
+    transition:background 0.25s ease;
+  }
+  #statusbar.offline{background:var(--tide);}
+  #statusbar .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#8FD19E;margin-right:7px;}
+  #statusbar.offline .dot{background:#E8D28A;}
+  #statusbar .left{display:flex;align-items:center;}
+  #statusbar .right{opacity:0.9;font-weight:500;}
+
+  header.top{ background:var(--mangrove-dark); color:var(--sand); padding:16px 16px 12px 16px; }
+  header.top h1{ color:var(--sand); font-size:1.25rem; }
+  header.top p{ margin:2px 0 0 0; color:#B9C9BE; font-size:0.82rem; }
+
+  nav#tabs{ display:flex; position:sticky; top:37px; z-index:55; background:var(--sand); border-bottom:1px solid var(--line); }
+  nav#tabs button{ flex:1; padding:11px 4px; background:none; border:none; font-size:0.74rem; font-weight:700; letter-spacing:0.2px;
+    color:var(--tide); border-bottom:3px solid transparent; font-family:inherit; cursor:pointer; }
+  nav#tabs button.active{ color:var(--shell-dim); border-bottom-color:var(--shell); }
+
+  main{ padding:16px; max-width:640px; margin:0 auto; }
+  .view{ display:none; }
+  .view.active{ display:block; }
+
+  /* ---- Wizard progress ---- */
+  #progress{ display:flex; align-items:center; margin-bottom:18px; }
+  #progress .step{ flex:1; text-align:center; position:relative; }
+  #progress .step .circ{
+    width:28px; height:28px; border-radius:50%; background:var(--paper); border:2px solid var(--line);
+    color:var(--tide); font-size:0.78rem; font-weight:700; display:flex; align-items:center; justify-content:center;
+    margin:0 auto 5px auto; transition:all .2s ease;
+  }
+  #progress .step.done .circ{ background:var(--mangrove-mid); border-color:var(--mangrove-mid); color:#fff; }
+  #progress .step.active .circ{ background:var(--shell); border-color:var(--shell); color:#fff; }
+  #progress .step .lbl{ font-size:0.62rem; text-transform:uppercase; letter-spacing:0.3px; color:var(--tide); font-weight:700; }
+  #progress .step.active .lbl{ color:var(--shell-dim); }
+  #progress .bar{ position:absolute; top:14px; left:-50%; width:100%; height:2px; background:var(--line); z-index:-1; }
+  #progress .step.done .bar, #progress .step.active .bar{ background:var(--mangrove-mid); }
+  #progress .step:first-child .bar{ display:none; }
+
+  .card{ background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:14px; }
+
+  /* ---- Module selection ---- */
+  .module-card{
+    display:flex; align-items:center; gap:14px; background:var(--paper); border:1.5px solid var(--line);
+    border-radius:12px; padding:16px; margin-bottom:12px; cursor:pointer; transition:border-color .15s ease;
+  }
+  .module-card:active{ border-color:var(--shell); }
+  .module-icon{ font-size:1.7rem; flex:none; }
+  .module-txt{ flex:1; }
+  .module-txt h3{ font-family:inherit; font-size:1rem; margin-bottom:2px; }
+  .module-txt p{ font-size:0.8rem; color:var(--tide); margin:0; }
+  .module-arrow{ color:var(--shell); font-size:1rem; flex:none; }
+  .module-back{
+    background:none; border:none; color:var(--tide); font-weight:700; font-size:0.85rem;
+    padding:6px 0 14px 0; cursor:pointer; font-family:inherit;
+  }
+  .module-crumb{ font-size:0.78rem; color:#7A8177; font-weight:600; margin-bottom:14px; }
+  .module-crumb span{ margin:0 4px; color:var(--line); }
+  label{ display:block; font-size:0.76rem; font-weight:700; color:var(--mangrove-mid); margin:12px 0 5px 0; text-transform:uppercase; letter-spacing:0.3px; }
+  label.first{ margin-top:0; }
+  input[type=text], input[type=number], input[type=date], input[type=time], select, textarea{
+    width:100%; padding:11px 10px; font-size:1rem; border:1.5px solid var(--line); border-radius:7px;
+    background:var(--sand); color:var(--ink); font-family:inherit;
+  }
+  input:focus, select:focus, textarea:focus{ outline:2px solid var(--shell); outline-offset:1px; border-color:var(--shell); }
+  textarea{ resize:vertical; min-height:70px; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+  .btn{ display:inline-block; padding:13px 18px; border-radius:8px; font-weight:700; font-size:0.92rem; border:none; cursor:pointer; font-family:inherit; text-align:center; }
+  .btn-primary{ background:var(--shell); color:#fff; }
+  .btn-primary:active{ background:var(--shell-dim); }
+  .btn-secondary{ background:none; color:var(--mangrove-mid); border:1.5px solid var(--mangrove-mid); }
+  .btn-ghost{ background:none; color:var(--tide); border:1.5px solid var(--line); font-weight:600; font-size:0.82rem; padding:8px 12px; }
+  .btn-danger{ background:none; color:var(--alert); border:1.5px solid var(--alert); font-size:0.8rem; padding:7px 11px; }
+  .btn:disabled{ opacity:0.4; }
+  .btn-block{ width:100%; }
+
+  #wizardNav{
+    position:fixed; bottom:0; left:0; right:0; background:var(--paper); border-top:1px solid var(--line);
+    padding:10px 14px; display:none; gap:8px; z-index:60;
+  }
+  #wizardNav .btn{ flex:1; padding:14px 8px; font-size:0.85rem; }
+
+  /* ---- Quadrat cards ---- */
+  .quad-card{ border:1.5px solid var(--line); border-radius:10px; margin-bottom:12px; overflow:hidden; background:var(--paper); }
+  .quad-head{ display:flex; align-items:center; justify-content:space-between; padding:13px 14px; cursor:pointer; background:var(--sand-dim); }
+  .quad-head .ttl{ font-weight:700; font-size:0.95rem; }
+  .quad-head .sub{ font-size:0.76rem; color:var(--tide); font-weight:600; margin-top:2px; }
+  .quad-head .chev{ font-size:1.1rem; color:var(--mangrove-mid); transition:transform .2s ease; flex:none; margin-left:10px; }
+  .quad-card.open .chev{ transform:rotate(180deg); }
+  .quad-body{ display:none; padding:14px; border-top:1px solid var(--line); }
+  .quad-card.open .quad-body{ display:block; }
+  .quad-body-actions{ display:flex; justify-content:flex-end; margin-top:6px; }
+
+  .crab-entry{ border:1.5px solid var(--line); border-radius:8px; padding:12px; margin-bottom:10px; background:var(--sand); position:relative; }
+  .crab-entry .idx{ position:absolute; top:-9px; left:10px; background:var(--mangrove-mid); color:#fff; font-size:0.66rem; font-weight:700; padding:2px 8px; border-radius:10px; }
+  .crab-entry .remove{ position:absolute; top:8px; right:8px; background:none; border:none; color:var(--alert); font-weight:700; font-size:0.95rem; cursor:pointer; padding:4px 8px; }
+
+  #addQuadBtn, .add-crab-btn{
+    width:100%; padding:13px; border:2px dashed var(--tide); border-radius:8px; background:none; color:var(--tide);
+    font-weight:700; cursor:pointer; font-family:inherit; margin-top:4px;
+  }
+  .nested-label{ font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; color:var(--shell-dim); margin:14px 0 8px 0; padding-top:12px; border-top:1px dashed var(--line); }
+
+  .gps-readout{ font-size:0.82rem; color:var(--mangrove-mid); margin-top:6px; }
+  .help{ font-size:0.78rem; color:#7A8177; margin-top:4px; }
+
+  .record-card{ background:var(--paper); border:1px solid var(--line); border-left:5px solid var(--mangrove-mid); border-radius:8px; padding:13px 14px; margin-bottom:10px; }
+  .record-card.unsynced{ border-left-color:var(--shell); }
+  .record-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .record-top h3{ font-size:1rem; font-family:inherit; font-weight:700; }
+  .badge{ font-size:0.65rem; font-weight:700; padding:3px 8px; border-radius:10px; text-transform:uppercase; letter-spacing:0.3px; flex:none; white-space:nowrap; }
+  .badge.synced{ background:#DCEAE0; color:var(--mangrove-mid); }
+  .badge.unsynced{ background:#F5DFC8; color:var(--shell-dim); }
+  .badge.draft{ background:#E7E1F2; color:#5B4A8A; }
+  .record-meta{ font-size:0.82rem; color:#5B6259; margin-top:4px; line-height:1.5; }
+  .record-actions{ margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
+
+  .empty{ text-align:center; padding:40px 20px; color:#8A9188; }
+  .stat-row{ display:flex; gap:10px; margin-bottom:16px; }
+  .stat{ flex:1; background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:12px; text-align:center; }
+  .stat .n{ font-size:1.4rem; font-weight:700; color:var(--mangrove-mid); font-family:Georgia,serif; }
+  .stat .l{ font-size:0.65rem; text-transform:uppercase; letter-spacing:0.3px; color:var(--tide); margin-top:2px; }
+
+  #syncLog{ background:var(--mangrove-dark); color:#CFE0D5; border-radius:8px; padding:12px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:0.74rem; line-height:1.6; max-height:180px; overflow-y:auto; margin-top:10px; white-space:pre-wrap; }
+
+  .toast{ position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:var(--mangrove-dark); color:#fff; padding:11px 20px; border-radius:24px;
+    font-size:0.85rem; font-weight:600; z-index:100; opacity:0; transition:opacity 0.25s ease; pointer-events:none; max-width:88%; text-align:center; }
+  .toast.show{ opacity:1; }
+
+  .review-block{ margin-bottom:16px; }
+  .review-block h3{ font-size:0.9rem; color:var(--mangrove-mid); border-bottom:1px solid var(--line); padding-bottom:6px; margin-bottom:8px; }
+  .review-line{ display:flex; justify-content:space-between; font-size:0.86rem; padding:4px 0; gap:10px; }
+  .review-line .k{ color:#7A8177; }
+  .review-line .v{ font-weight:600; text-align:right; }
+  .review-quad{ background:var(--sand-dim); border-radius:8px; padding:10px 12px; margin-bottom:8px; }
+  .review-quad .q-ttl{ font-weight:700; font-size:0.85rem; margin-bottom:4px; }
+  .review-crab{ font-size:0.8rem; color:var(--ink); padding:3px 0 3px 10px; border-left:2px solid var(--line); margin-top:4px; }
+
+  /* ---- Auth screen ---- */
+  #authScreen{
+    position:fixed; inset:0; z-index:200; background:var(--mangrove-dark);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  #authScreen .authCard{ width:100%; max-width:380px; background:var(--paper); border-radius:14px; padding:28px 24px; }
+  #authScreen h1{ color:var(--mangrove-dark); font-size:1.5rem; text-align:center; margin-bottom:2px; }
+  #authScreen .authSub{ text-align:center; color:var(--tide); font-size:0.85rem; margin-bottom:20px; }
+  #authError{ display:none; background:#F7DEDE; color:var(--alert); font-size:0.82rem; padding:9px 12px; border-radius:7px; margin-bottom:12px; }
+  #authError.show{ display:block; }
+  #setPasswordError{ display:none; background:#F7DEDE; color:var(--alert); font-size:0.82rem; padding:9px 12px; border-radius:7px; margin-bottom:12px; }
+  #setPasswordError.show{ display:block; }
+  #authToggle{ text-align:center; margin-top:16px; font-size:0.85rem; color:var(--tide); }
+  #authToggle a{ color:var(--shell-dim); font-weight:700; text-decoration:none; cursor:pointer; }
+  #authScreen .authLoading{ text-align:center; color:var(--sand); font-size:0.85rem; }
+  #logoutRow{ display:flex; justify-content:space-between; align-items:center; }
+  #userEmailLabel{ font-size:0.82rem; color:var(--tide); word-break:break-all; }
+</style>
+</head>
+<body>
+
+<!-- ===================== AUTH SCREEN ===================== -->
+<div id="authScreen">
+  <div class="authCard">
+    <div id="authLoadingState" class="authLoading">Checking session…</div>
+
+    <div id="authFormWrap" style="display:none;">
+      <h1>🦀 KUKA</h1>
+      <p class="authSub">Fisheries survey platform — Papua New Guinea</p>
+
+      <div id="authError"></div>
+
+      <div id="authNameField" style="display:none;">
+        <label class="first">Full Name</label>
+        <input type="text" id="auth_fullname" placeholder="e.g. Ronnis Nai" autocomplete="name">
+      </div>
+
+      <label id="authEmailLabel" class="first">Email</label>
+      <input type="text" id="auth_email" placeholder="you@example.com" autocomplete="username">
+
+      <div id="authPasswordField">
+        <label>Password</label>
+        <input type="text" id="auth_password" placeholder="••••••••" autocomplete="current-password" style="-webkit-text-security:disc; text-security:disc;">
+      </div>
+
+      <p class="help" id="authSignupHelp" style="display:none;">You'll receive an email once your access is approved, with a link to set your password.</p>
+
+      <button class="btn btn-primary btn-block" id="authSubmitBtn" type="button" style="margin-top:16px;">Log In</button>
+
+      <div id="authToggle">
+        Don't have an account? <a id="authToggleLink">Request access</a>
+      </div>
+    </div>
+
+    <div id="setPasswordWrap" style="display:none;">
+      <h1>🦀 KUKA</h1>
+      <p class="authSub">Set your password to finish creating your account</p>
+      <div id="setPasswordError"></div>
+      <label class="first">New Password</label>
+      <input type="text" id="setpw_password" placeholder="At least 6 characters" style="-webkit-text-security:disc; text-security:disc;">
+      <label>Confirm Password</label>
+      <input type="text" id="setpw_confirm" placeholder="Re-enter password" style="-webkit-text-security:disc; text-security:disc;">
+      <button class="btn btn-primary btn-block" id="setPasswordBtn" type="button" style="margin-top:16px;">Set Password &amp; Continue</button>
+    </div>
+  </div>
+</div>
+
+<div id="statusbar">
+  <span class="left"><span class="dot"></span><span id="statusText">Checking connection…</span></span>
+  <span class="right" id="unsyncedCount"></span>
+</div>
+
+<header class="top">
+  <h1>🦀 KUKA</h1>
+  <p>Fisheries survey platform — Papua New Guinea</p>
+</header>
+
+<nav id="tabs">
+  <button data-view="new" class="active">Fisheries Survey</button>
+  <button data-view="records">Records</button>
+  <button data-view="sync">Export &amp; Sync</button>
+  <button data-view="settings">Settings</button>
+</nav>
+
+<main>
+
+  <!-- ===================== FISHERIES SURVEY ===================== -->
+  <section class="view active" id="view-new">
+
+    <!-- Module selection menu -->
+    <div id="moduleMenu">
+      <div class="eyebrow">Fisheries Survey</div>
+      <h2 style="margin-bottom:14px;">Choose a survey module</h2>
+
+      <div class="module-card" data-openmodule="mudcrab">
+        <div class="module-icon">🦀</div>
+        <div class="module-txt">
+          <h3>Mud Crab Survey</h3>
+          <p>Mud Crab Data Collection — quadrat-based stock assessment</p>
+        </div>
+        <div class="module-arrow">▶</div>
+      </div>
+
+      <div class="module-card" data-openmodule="coconutcrab">
+        <div class="module-icon">🥥</div>
+        <div class="module-txt">
+          <h3>Coconut Crab Survey</h3>
+          <p>Biological Data Collection · Socio-economic Data Collection</p>
+        </div>
+        <div class="module-arrow">▶</div>
+      </div>
+    </div>
+
+    <!-- ============ MUD CRAB SURVEY MODULE (unchanged) ============ -->
+    <div id="mudCrabModule" style="display:none;">
+      <button class="module-back" type="button" data-backto="menu">◀ Fisheries Survey</button>
+      <div class="module-crumb">Mud Crab Survey <span>▸</span> Mud Crab Data Collection</div>
+
+    <div id="progress">
+      <div class="step active" data-step="1"><div class="bar"></div><div class="circ">1</div><div class="lbl">Info</div></div>
+      <div class="step" data-step="2"><div class="bar"></div><div class="circ">2</div><div class="lbl">Quadrats</div></div>
+      <div class="step" data-step="3"><div class="bar"></div><div class="circ">3</div><div class="lbl">Finish</div></div>
+      <div class="step" data-step="4"><div class="bar"></div><div class="circ">4</div><div class="lbl">Review</div></div>
+    </div>
+
+    <!-- Step 1: Survey Information -->
+    <div class="wizard-step" data-wstep="1">
+      <div class="card">
+        <div class="eyebrow">Step 1 of 4</div>
+        <h2>Survey Information</h2>
+
+        <label class="first">Start Time</label>
+        <input type="time" id="f_startTime">
+
+        <label>Date of Survey</label>
+        <input type="date" id="f_date">
+
+        <label>Surveyor 1</label>
+        <select id="f_surveyor1">
+          <option value="">Select surveyor…</option>
+          <option>Olisasha Dandava</option>
+          <option>Nickson Palg</option>
+          <option>Nathan Tony</option>
+          <option>Joan Kumba</option>
+          <option>Jeremy Marisimba</option>
+          <option>Ronnis Nai</option>
+        </select>
+
+        <label>Province</label>
+        <select id="f_province">
+          <option value="">Select province…</option>
+          <option>Milne Bay Province</option>
+          <option>Manus Province</option>
+          <option>New Ireland Province</option>
+          <option>Gulf Province</option>
+          <option>Central Province</option>
+          <option>Western Province</option>
+          <option>Autonomous Region of Bougainville (AROB)</option>
+        </select>
+
+        <label>LLG (Location)</label>
+        <input type="text" id="f_llg" placeholder="e.g. Sumkar Rural LLG">
+
+        <label>Sampling Site</label>
+        <input type="text" id="f_samplingSite" placeholder="e.g. Bogia lagoon">
+
+        <label>Tide Condition</label>
+        <select id="f_tideCondition">
+          <option>Low Tide</option>
+          <option>Rising</option>
+          <option>High Tide</option>
+          <option>Falling</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Step 2: Quadrat Data (+ nested Mud Crab Data) -->
+    <div class="wizard-step" data-wstep="2" style="display:none;">
+      <div class="card">
+        <div class="eyebrow">Step 2 of 4</div>
+        <h2>Quadrat Data</h2>
+        <p class="help">Add one card per quadrat sampled. Tap a card to expand it and, if crabs were found, record each crab inside.</p>
+      </div>
+      <div id="quadList"></div>
+      <button id="addQuadBtn" type="button">+ Add quadrat</button>
+    </div>
+
+    <!-- Step 3: End of Survey -->
+    <div class="wizard-step" data-wstep="3" style="display:none;">
+      <div class="card">
+        <div class="eyebrow">Step 3 of 4</div>
+        <h2>End of Survey</h2>
+
+        <label class="first">Comments</label>
+        <textarea id="f_comments" placeholder="Weather, disturbances, anything unusual…"></textarea>
+
+        <label>GPS Location</label>
+        <button class="btn btn-secondary btn-block" id="gpsBtn" type="button">📍 Capture GPS location</button>
+        <div class="gps-readout" id="gpsReadout">Not captured yet</div>
+        <p class="help">One GPS reading is captured for the entire survey.</p>
+
+        <label>End Time</label>
+        <input type="time" id="f_endTime">
+      </div>
+    </div>
+
+    <!-- Step 4: Review -->
+    <div class="wizard-step" data-wstep="4" style="display:none;">
+      <div class="card">
+        <div class="eyebrow">Step 4 of 4</div>
+        <h2>Review Survey</h2>
+        <p class="help">Check everything below, then submit. Submitted surveys are saved on this device and can be synced later.</p>
+      </div>
+      <div id="reviewContent"></div>
+    </div>
+
+    </div><!-- /#mudCrabModule -->
+
+    <!-- ============ COCONUT CRAB SURVEY MODULE (placeholders only) ============ -->
+    <div id="coconutModule" style="display:none;">
+      <button class="module-back" type="button" data-backto="menu">◀ Fisheries Survey</button>
+
+      <div id="coconutList">
+        <div class="eyebrow">Coconut Crab Survey</div>
+        <h2 style="margin-bottom:14px;">Choose a form</h2>
+
+        <div class="module-card" data-openplaceholder="Biological Data Collection">
+          <div class="module-icon">🧬</div>
+          <div class="module-txt">
+            <h3>Biological Data Collection</h3>
+            <p>Coming soon</p>
+          </div>
+          <div class="module-arrow">▶</div>
+        </div>
+
+        <div class="module-card" data-openplaceholder="Socio-economic Data Collection">
+          <div class="module-icon">👥</div>
+          <div class="module-txt">
+            <h3>Socio-economic Data Collection</h3>
+            <p>Coming soon</p>
+          </div>
+          <div class="module-arrow">▶</div>
+        </div>
+      </div>
+
+      <div id="coconutPlaceholder" style="display:none;">
+        <button class="module-back" type="button" data-backto="coconutlist">◀ Coconut Crab Survey</button>
+        <div class="card" style="text-align:center; padding:36px 20px;">
+          <div class="eyebrow">Coconut Crab Survey</div>
+          <h2 id="placeholderTitle" style="margin-bottom:10px;">—</h2>
+          <p class="help">This form has not been designed yet. Questionnaire fields will be added here once the survey specification is provided.</p>
+        </div>
+      </div>
+    </div><!-- /#coconutModule -->
+
+  </section>
+
+  <!-- ===================== RECORDS ===================== -->
+  <section class="view" id="view-records">
+    <div class="stat-row">
+      <div class="stat"><div class="n" id="statTotal">0</div><div class="l">Submitted</div></div>
+      <div class="stat"><div class="n" id="statCrabs">0</div><div class="l">Crabs logged</div></div>
+      <div class="stat"><div class="n" id="statUnsynced">0</div><div class="l">Not synced</div></div>
+    </div>
+    <div id="recordsList"></div>
+  </section>
+
+  <!-- ===================== SYNC ===================== -->
+  <section class="view" id="view-sync">
+    <div class="card">
+      <div class="eyebrow">Move data off this device</div>
+      <h2>Export</h2>
+      <p class="help">Works with zero signal. Produces a file you can transfer by USB, Bluetooth, or upload later.</p>
+      <button class="btn btn-secondary btn-block" id="exportCsvBtn" type="button" style="margin-bottom:10px;">Export all as CSV</button>
+      <button class="btn btn-secondary btn-block" id="exportJsonBtn" type="button">Export all as JSON (full backup)</button>
+    </div>
+    <div class="card">
+      <div class="eyebrow">When back in network range</div>
+      <h2>Sync to server</h2>
+      <p class="help">Sends unsynced surveys to the server URL set in Settings. Safe to retry — already-synced records are skipped.</p>
+      <button class="btn btn-primary btn-block" id="syncBtn" type="button">Sync now (<span id="syncCount">0</span> pending)</button>
+      <div id="syncLog"></div>
+    </div>
+  </section>
+
+  <!-- ===================== SETTINGS ===================== -->
+  <section class="view" id="view-settings">
+    <div class="card">
+      <div class="eyebrow">Account</div>
+      <h2>Signed in</h2>
+      <div id="logoutRow" style="margin-top:10px;">
+        <span id="userEmailLabel">—</span>
+        <button class="btn-ghost" id="logoutBtn" type="button">Log out</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="eyebrow">Configuration</div>
+      <h2>Settings</h2>
+      <label class="first">Default Surveyor 1</label>
+      <select id="s_surveyor">
+        <option value="">No default</option>
+        <option>Olisasha Dandava</option>
+        <option>Nickson Palg</option>
+        <option>Nathan Tony</option>
+        <option>Joan Kumba</option>
+        <option>Jeremy Marisimba</option>
+        <option>Ronnis Nai</option>
+      </select>
+      <label>Server sync URL</label>
+      <input type="text" id="s_serverUrl" placeholder="https://your-server.example/api/mudcrab-surveys">
+      <p class="help">Leave blank until your data manager provides one — export still works fully offline.</p>
+      <button class="btn btn-secondary btn-block" id="saveSettingsBtn" type="button" style="margin-top:14px;">Save settings</button>
+    </div>
+    <div class="card">
+      <div class="eyebrow">Danger zone</div>
+      <h2>Reset</h2>
+      <p class="help">Permanently deletes every submitted survey and the current draft on this device. Export a backup first.</p>
+      <button class="btn btn-danger" id="wipeBtn" type="button">Delete all local data</button>
+    </div>
+  </section>
+
+</main>
+
+<div id="wizardNav">
+  <button class="btn btn-secondary" id="prevBtn" type="button">◀ Previous</button>
+  <button class="btn btn-ghost" id="saveDraftBtn" type="button">Save Draft</button>
+  <button class="btn btn-primary" id="nextBtn" type="button">Next ▶</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ================= Supabase Auth ================= */
+const SUPABASE_URL = "https://spwdpzcuyrwjdhvluadu.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwd2RwemN1eXJ3amRodmx1YWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5OTQyOTYsImV4cCI6MjA5NjU3MDI5Nn0.xoI33qTtwT0SMxY_uJGQ0xSWE1o3Q0UgifguMyjvso8";
+
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let authMode = 'login'; // 'login' | 'signup'
+let currentUser = null;
+let awaitingPasswordSet = false;
+
+function showAuthScreen(){
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('authLoadingState').style.display = 'none';
+  document.getElementById('authFormWrap').style.display = 'block';
+  document.getElementById('setPasswordWrap').style.display = 'none';
+}
+function showSetPasswordScreen(){
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('authLoadingState').style.display = 'none';
+  document.getElementById('authFormWrap').style.display = 'none';
+  document.getElementById('setPasswordWrap').style.display = 'block';
+}
+function hideAuthScreen(){
+  document.getElementById('authScreen').style.display = 'none';
+}
+function showAuthLoading(){
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('authLoadingState').style.display = 'block';
+  document.getElementById('authFormWrap').style.display = 'none';
+  document.getElementById('setPasswordWrap').style.display = 'none';
+}
+function authErr(msg){
+  const el = document.getElementById('authError');
+  if(!msg){ el.classList.remove('show'); el.textContent=''; return; }
+  el.textContent = msg; el.classList.add('show');
+}
+function setPwErr(msg){
+  const el = document.getElementById('setPasswordError');
+  if(!msg){ el.classList.remove('show'); el.textContent=''; return; }
+  el.textContent = msg; el.classList.add('show');
+}
+
+/* Detect invite/recovery links: Supabase redirects back with #access_token=...&type=invite (or recovery) */
+async function checkForInviteLink(){
+  const hash = window.location.hash;
+  if(!hash || hash.indexOf('access_token') === -1) return false;
+  const params = new URLSearchParams(hash.substring(1));
+  const accessToken = params.get('access_token');
+  const refreshToken = params.get('refresh_token');
+  const type = params.get('type');
+  if(!accessToken || (type !== 'invite' && type !== 'recovery')) return false;
+
+  const { error } = await supabaseClient.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+  // Clean the token out of the URL immediately so it isn't left visible or bookmarked
+  history.replaceState(null, '', window.location.pathname + window.location.search);
+  if(error){ return false; }
+  awaitingPasswordSet = true;
+  showSetPasswordScreen();
+  return true;
+}
+
+document.getElementById('setPasswordBtn').addEventListener('click', async ()=>{
+  const pw = document.getElementById('setpw_password').value;
+  const confirm = document.getElementById('setpw_confirm').value;
+  setPwErr(null);
+  if(!pw || pw.length < 6){ setPwErr('Password must be at least 6 characters.'); return; }
+  if(pw !== confirm){ setPwErr("Passwords don't match."); return; }
+
+  const btn = document.getElementById('setPasswordBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  try{
+    const { error } = await supabaseClient.auth.updateUser({ password: pw });
+    if(error) throw error;
+    awaitingPasswordSet = false;
+    toast('Password set — welcome to KUKA');
+    // Manually trigger the app-load path now that the password is set
+    const { data:{ session } } = await supabaseClient.auth.getSession();
+    if(session && session.user){
+      currentUser = session.user;
+      let name = currentUser.user_metadata && currentUser.user_metadata.full_name;
+      document.getElementById('userEmailLabel').textContent = name ? `${name} · ${currentUser.email}` : currentUser.email;
+      hideAuthScreen();
+      if(!name){
+        name = await syncFullNameFromRequest(currentUser);
+        if(name) document.getElementById('userEmailLabel').textContent = `${name} · ${currentUser.email}`;
+      }
+    }
+  } catch(err){
+    setPwErr(err.message || 'Could not set password. Please try again.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Set Password & Continue';
+  }
+});
+
+document.getElementById('authToggle').addEventListener('click', (e)=>{
+  if(e.target.id !== 'authToggleLink') return;
+  authMode = (authMode === 'login') ? 'signup' : 'login';
+  document.getElementById('authSubmitBtn').textContent = (authMode==='login') ? 'Log In' : 'Request Access';
+  document.getElementById('authNameField').style.display = (authMode==='signup') ? 'block' : 'none';
+  document.getElementById('authPasswordField').style.display = (authMode==='signup') ? 'none' : 'block';
+  document.getElementById('authSignupHelp').style.display = (authMode==='signup') ? 'block' : 'none';
+  document.getElementById('authEmailLabel').classList.toggle('first', authMode==='login');
+  document.getElementById('authToggle').innerHTML = (authMode==='login')
+    ? `Don't have an account? <a id="authToggleLink">Request access</a>`
+    : `Already have an account? <a id="authToggleLink">Log in</a>`;
+  authErr(null);
+});
+
+document.getElementById('authSubmitBtn').addEventListener('click', async ()=>{
+  const email = document.getElementById('auth_email').value.trim();
+  const fullName = document.getElementById('auth_fullname').value.trim();
+  authErr(null);
+
+  if(authMode === 'login'){
+    const password = document.getElementById('auth_password').value;
+    if(!email || !password){ authErr('Please enter both email and password.'); return; }
+
+    const btn = document.getElementById('authSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Logging in…';
+    try{
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if(error) throw error;
+    } catch(err){
+      authErr(err.message || 'Login failed. Please try again.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Log In';
+    }
+    return;
+  }
+
+  // Signup mode: submit a request for admin approval
+  if(!fullName){ authErr('Please enter your full name.'); return; }
+  if(!email){ authErr('Please enter your email.'); return; }
+
+  const btn = document.getElementById('authSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  try{
+    const { error } = await supabaseClient.from('signup_requests').insert({ full_name: fullName, email: email });
+    if(error) throw error;
+    authErr(null);
+    alert('Request submitted. You will receive an email with a link to set your password once your access is approved.');
+    authMode = 'login';
+    document.getElementById('authSubmitBtn').textContent = 'Log In';
+    document.getElementById('authNameField').style.display = 'none';
+    document.getElementById('authPasswordField').style.display = 'block';
+    document.getElementById('authSignupHelp').style.display = 'none';
+    document.getElementById('authEmailLabel').classList.add('first');
+    document.getElementById('authToggle').innerHTML = `Don't have an account? <a id="authToggleLink">Request access</a>`;
+    document.getElementById('auth_fullname').value = '';
+    document.getElementById('auth_email').value = '';
+  } catch(err){
+    authErr(err.message || 'Could not submit request. Please try again.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = (authMode==='login') ? 'Log In' : 'Request Access';
+  }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async ()=>{
+  if(confirm('Log out of KUKA? Your submitted surveys stay saved on this device.')){
+    await supabaseClient.auth.signOut();
+  }
+});
+
+async function syncFullNameFromRequest(user){
+  const existingName = user.user_metadata && user.user_metadata.full_name;
+  if(existingName) return existingName;
+
+  try{
+    const { data, error } = await supabaseClient
+      .from('signup_requests')
+      .select('full_name')
+      .eq('email', user.email)
+      .order('requested_at', { ascending:false })
+      .limit(1)
+      .maybeSingle();
+    if(error || !data || !data.full_name) return null;
+
+    const { error: updateErr } = await supabaseClient.auth.updateUser({ data:{ full_name: data.full_name } });
+    if(updateErr) return null;
+
+    await supabaseClient.from('signup_requests').update({ status:'completed' }).eq('email', user.email);
+    return data.full_name;
+  } catch(e){
+    return null;
+  }
+}
+
+supabaseClient.auth.onAuthStateChange(async (event, session)=>{
+  if(awaitingPasswordSet) return; // don't act until the person has set their password
+  if(session && session.user){
+    currentUser = session.user;
+    let name = currentUser.user_metadata && currentUser.user_metadata.full_name;
+    document.getElementById('userEmailLabel').textContent = name ? `${name} · ${currentUser.email}` : currentUser.email;
+    hideAuthScreen();
+    if(!name){
+      name = await syncFullNameFromRequest(currentUser);
+      if(name) document.getElementById('userEmailLabel').textContent = `${name} · ${currentUser.email}`;
+    }
+  } else {
+    currentUser = null;
+    showAuthScreen();
+  }
+});
+
+/* ================= IndexedDB layer ================= */
+const DB_NAME = "mudcrab_survey_db_v2";
+const DB_VERSION = 1;
+let db;
+
+function openDb(){
+  return new Promise((resolve, reject)=>{
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e)=>{
+      const _db = e.target.result;
+      if(!_db.objectStoreNames.contains("surveys")) _db.createObjectStore("surveys", { keyPath:"id" });
+      if(!_db.objectStoreNames.contains("settings")) _db.createObjectStore("settings", { keyPath:"key" });
+      if(!_db.objectStoreNames.contains("drafts")) _db.createObjectStore("drafts", { keyPath:"key" });
+    };
+    req.onsuccess = (e)=>{ db = e.target.result; resolve(db); };
+    req.onerror = (e)=> reject(e);
+  });
+}
+function txStore(name, mode){ return db.transaction(name, mode).objectStore(name); }
+function idbGetAll(storeName){ return new Promise((res,rej)=>{ const r=txStore(storeName,"readonly").getAll(); r.onsuccess=()=>res(r.result); r.onerror=rej; }); }
+function idbPut(storeName, value){ return new Promise((res,rej)=>{ const r=txStore(storeName,"readwrite").put(value); r.onsuccess=()=>res(); r.onerror=rej; }); }
+function idbDelete(storeName, key){ return new Promise((res,rej)=>{ const r=txStore(storeName,"readwrite").delete(key); r.onsuccess=()=>res(); r.onerror=rej; }); }
+function idbClear(storeName){ return new Promise((res,rej)=>{ const r=txStore(storeName,"readwrite").clear(); r.onsuccess=()=>res(); r.onerror=rej; }); }
+function idbGet(storeName,key){ return new Promise((res,rej)=>{ const r=txStore(storeName,"readonly").get(key); r.onsuccess=()=>res(r.result); r.onerror=rej; }); }
+
+/* ================= State ================= */
+let settings = { surveyor:"", serverUrl:"" };
+let currentStep = 1;
+let capturedGps = null;
+let quadCounter = 0;
+let crabCounter = 0;
+
+// draft survey state
+let draft = null;
+function blankDraft(){
+  return {
+    startTime:'', date:'', surveyor1:'', province:'', llg:'', samplingSite:'', tideCondition:'Low Tide',
+    quadrats: [],
+    comments:'', gps:null, endTime:'',
+  };
+}
+
+/* ================= Utility ================= */
+function uid(p){ return (p||'id') + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8); }
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._h); toast._h = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+function escapeCsv(v){ if(v===undefined||v===null) return ''; const s=String(v); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function downloadFile(filename, content, mime){
+  const blob = new Blob([content], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ================= Status bar ================= */
+function updateOnlineStatus(){
+  const bar = document.getElementById('statusbar');
+  const text = document.getElementById('statusText');
+  if(navigator.onLine){ bar.classList.remove('offline'); text.textContent = 'Online'; }
+  else { bar.classList.add('offline'); text.textContent = 'Offline — recording locally'; }
+  refreshUnsyncedBadge();
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+async function refreshUnsyncedBadge(){
+  try{
+    const all = await idbGetAll('surveys');
+    const pending = all.filter(s=>!s.synced).length;
+    document.getElementById('unsyncedCount').textContent = pending>0 ? (pending+' pending sync') : 'All synced';
+  }catch(e){}
+}
+
+/* ================= Tabs ================= */
+document.querySelectorAll('#tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('main > .view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+    updateWizardNavVisibility();
+    if(btn.dataset.view === 'records') renderRecords();
+    if(btn.dataset.view === 'sync') refreshSyncTab();
+  });
+});
+
+/* ================= Fisheries Survey module navigation ================= */
+// fisheriesState: 'menu' | 'mudcrab' | 'coconut'
+let fisheriesState = 'menu';
+
+function isFisheriesTabActive(){
+  return document.getElementById('view-new').classList.contains('active');
+}
+function updateWizardNavVisibility(){
+  document.getElementById('wizardNav').style.display =
+    (isFisheriesTabActive() && fisheriesState === 'mudcrab') ? 'flex' : 'none';
+}
+function showModuleMenu(){
+  fisheriesState = 'menu';
+  document.getElementById('moduleMenu').style.display = 'block';
+  document.getElementById('mudCrabModule').style.display = 'none';
+  document.getElementById('coconutModule').style.display = 'none';
+  updateWizardNavVisibility();
+  window.scrollTo(0,0);
+}
+function showMudCrabModule(){
+  fisheriesState = 'mudcrab';
+  document.getElementById('moduleMenu').style.display = 'none';
+  document.getElementById('mudCrabModule').style.display = 'block';
+  document.getElementById('coconutModule').style.display = 'none';
+  updateWizardNavVisibility();
+  window.scrollTo(0,0);
+}
+function showCoconutModule(){
+  fisheriesState = 'coconut';
+  document.getElementById('moduleMenu').style.display = 'none';
+  document.getElementById('mudCrabModule').style.display = 'none';
+  document.getElementById('coconutModule').style.display = 'block';
+  document.getElementById('coconutList').style.display = 'block';
+  document.getElementById('coconutPlaceholder').style.display = 'none';
+  updateWizardNavVisibility();
+  window.scrollTo(0,0);
+}
+function showCoconutPlaceholder(title){
+  document.getElementById('placeholderTitle').textContent = title;
+  document.getElementById('coconutList').style.display = 'none';
+  document.getElementById('coconutPlaceholder').style.display = 'block';
+  window.scrollTo(0,0);
+}
+
+document.querySelectorAll('[data-openmodule]').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    const m = el.dataset.openmodule;
+    if(m === 'mudcrab') showMudCrabModule();
+    if(m === 'coconutcrab') showCoconutModule();
+  });
+});
+document.querySelectorAll('[data-openplaceholder]').forEach(el=>{
+  el.addEventListener('click', ()=> showCoconutPlaceholder(el.dataset.openplaceholder));
+});
+document.querySelectorAll('[data-backto]').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    const to = el.dataset.backto;
+    if(to === 'menu') showModuleMenu();
+    if(to === 'coconutlist') showCoconutModule();
+  });
+});
+
+/* ================= Wizard navigation ================= */
+function goToStep(n){
+  currentStep = n;
+  document.querySelectorAll('.wizard-step').forEach(el=>{
+    el.style.display = (parseInt(el.dataset.wstep) === n) ? 'block' : 'none';
+  });
+  document.querySelectorAll('#progress .step').forEach(el=>{
+    const s = parseInt(el.dataset.step);
+    el.classList.toggle('active', s === n);
+    el.classList.toggle('done', s < n);
+  });
+  document.getElementById('prevBtn').style.visibility = (n===1) ? 'hidden' : 'visible';
+  const nextBtn = document.getElementById('nextBtn');
+  if(n === 4){ nextBtn.textContent = 'Submit Survey ✔'; }
+  else { nextBtn.textContent = 'Next ▶'; }
+  if(n === 4) renderReview();
+  window.scrollTo(0,0);
+}
+document.getElementById('prevBtn').addEventListener('click', ()=>{ if(currentStep>1){ pullFormIntoDraft(); goToStep(currentStep-1); } });
+document.getElementById('nextBtn').addEventListener('click', async ()=>{
+  pullFormIntoDraft();
+  if(currentStep === 1){
+    if(!draft.surveyor1.trim() || !draft.samplingSite.trim()){
+      toast('Please fill in Surveyor 1 and Sampling Site.'); return;
+    }
+  }
+  if(currentStep === 2 && draft.quadrats.length === 0){
+    if(!confirm('No quadrats added yet — continue anyway?')) return;
+  }
+  if(currentStep === 4){
+    await submitSurvey();
+    return;
+  }
+  autosaveDraft();
+  goToStep(currentStep+1);
+});
+document.getElementById('saveDraftBtn').addEventListener('click', ()=>{
+  pullFormIntoDraft();
+  autosaveDraft(true);
+});
+
+/* ================= Pull/push form <-> draft state ================= */
+function pullFormIntoDraft(){
+  if(!draft) return;
+  if(currentStep === 1){
+    draft.startTime = document.getElementById('f_startTime').value;
+    draft.date = document.getElementById('f_date').value;
+    draft.surveyor1 = document.getElementById('f_surveyor1').value;
+    draft.province = document.getElementById('f_province').value;
+    draft.llg = document.getElementById('f_llg').value;
+    draft.samplingSite = document.getElementById('f_samplingSite').value;
+    draft.tideCondition = document.getElementById('f_tideCondition').value;
+  }
+  if(currentStep === 3){
+    draft.comments = document.getElementById('f_comments').value;
+    draft.endTime = document.getElementById('f_endTime').value;
+    draft.gps = capturedGps;
+  }
+}
+function pushDraftIntoForm(){
+  document.getElementById('f_startTime').value = draft.startTime || '';
+  document.getElementById('f_date').value = draft.date || '';
+  document.getElementById('f_surveyor1').value = draft.surveyor1 || '';
+  document.getElementById('f_province').value = draft.province || '';
+  document.getElementById('f_llg').value = draft.llg || '';
+  document.getElementById('f_samplingSite').value = draft.samplingSite || '';
+  document.getElementById('f_tideCondition').value = draft.tideCondition || 'Low Tide';
+  document.getElementById('f_comments').value = draft.comments || '';
+  document.getElementById('f_endTime').value = draft.endTime || '';
+  capturedGps = draft.gps || null;
+  document.getElementById('gpsReadout').textContent = capturedGps
+    ? `Lat ${capturedGps.lat.toFixed(5)}, Lon ${capturedGps.lon.toFixed(5)} (±${Math.round(capturedGps.accuracy)}m)`
+    : 'Not captured yet';
+  renderQuadList();
+}
+
+/* ================= Autosave ================= */
+let autosaveTimer = null;
+function autosaveDraft(showToast){
+  pullFormIntoDraft();
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(async ()=>{
+    await idbPut('drafts', { key:'current', value: draft, savedAt: new Date().toISOString() });
+    if(showToast) toast('Draft saved');
+  }, showToast ? 0 : 400);
+}
+document.querySelectorAll('#view-new input, #view-new select, #view-new textarea').forEach(el=>{
+  el.addEventListener('input', ()=>autosaveDraft(false));
+  el.addEventListener('change', ()=>autosaveDraft(false));
+});
+
+/* ================= GPS ================= */
+document.getElementById('gpsBtn').addEventListener('click', ()=>{
+  const readout = document.getElementById('gpsReadout');
+  if(!navigator.geolocation){ readout.textContent = 'GPS not supported on this device/browser.'; return; }
+  readout.textContent = 'Capturing…';
+  navigator.geolocation.getCurrentPosition(
+    (pos)=>{
+      capturedGps = { lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy };
+      readout.textContent = `Lat ${capturedGps.lat.toFixed(5)}, Lon ${capturedGps.lon.toFixed(5)} (±${Math.round(capturedGps.accuracy)}m)`;
+      autosaveDraft(false);
+    },
+    (err)=>{ readout.textContent = 'Could not get location (' + err.message + '). GPS chips often still work offline if the device has one.'; },
+    { enableHighAccuracy:true, timeout:15000 }
+  );
+});
+
+/* ================= Quadrat Data (repeat group) ================= */
+function addQuadrat(){
+  const q = {
+    id: 'q'+(quadCounter++), quadratNumber: draft.quadrats.length+1, emptyBurrows:'', crabsFound:'no',
+    crabs: [], open:true
+  };
+  draft.quadrats.forEach(qq=>qq.open=false);
+  draft.quadrats.push(q);
+  renderQuadList();
+  autosaveDraft(false);
+}
+function removeQuadrat(id){
+  draft.quadrats = draft.quadrats.filter(q=>q.id!==id);
+  renderQuadList();
+  autosaveDraft(false);
+}
+function toggleQuadrat(id){
+  draft.quadrats.forEach(q=>{ q.open = (q.id===id) ? !q.open : q.open; });
+  renderQuadList();
+}
+function addCrab(quadId){
+  const q = draft.quadrats.find(x=>x.id===quadId);
+  if(!q) return;
+  q.crabs.push({
+    id:'cr'+(crabCounter++), species:'Scylla serrata', sex:'Male', berried:'No', molted:'No',
+    carapaceWidth:'', weight:'', gearUsed:'Hand Collection', effort:''
+  });
+  renderQuadList();
+  autosaveDraft(false);
+}
+function removeCrab(quadId, crabId){
+  const q = draft.quadrats.find(x=>x.id===quadId);
+  if(!q) return;
+  q.crabs = q.crabs.filter(c=>c.id!==crabId);
+  renderQuadList();
+  autosaveDraft(false);
+}
+
+function renderQuadList(){
+  const wrap = document.getElementById('quadList');
+  wrap.innerHTML = '';
+  draft.quadrats.forEach((q, qi)=>{
+    const card = document.createElement('div');
+    card.className = 'quad-card' + (q.open ? ' open' : '');
+    const crabCount = q.crabs.length;
+    card.innerHTML = `
+      <div class="quad-head" data-toggle="${q.id}">
+        <div>
+          <div class="ttl">Quadrat ${qi+1}</div>
+          <div class="sub">${q.emptyBurrows!==''? q.emptyBurrows+' empty burrows · ':''}Crabs found: ${q.crabsFound==='yes'?'Yes ('+crabCount+')':'No'}</div>
+        </div>
+        <div class="chev">⌄</div>
+      </div>
+      <div class="quad-body">
+        <label class="first">Quadrat Number</label>
+        <input type="number" min="1" step="1" data-qfield="quadratNumber" data-qid="${q.id}" value="${q.quadratNumber}">
+
+        <label>Number of Empty Burrows</label>
+        <input type="number" min="0" step="1" data-qfield="emptyBurrows" data-qid="${q.id}" value="${q.emptyBurrows}">
+
+        <label>Were any crabs found?</label>
+        <select data-qfield="crabsFound" data-qid="${q.id}">
+          <option value="no" ${q.crabsFound==='no'?'selected':''}>No</option>
+          <option value="yes" ${q.crabsFound==='yes'?'selected':''}>Yes</option>
+        </select>
+
+        ${q.crabsFound==='yes' ? `
+          <div class="nested-label">Mud Crab Data — Quadrat ${qi+1}</div>
+          <div class="crabs-wrap" data-crabs-for="${q.id}">
+            ${q.crabs.map((c,ci)=>renderCrabEntry(q.id, c, ci)).join('')}
+          </div>
+          <button class="add-crab-btn" type="button" data-addcrab="${q.id}">+ Add mud crab record</button>
+        ` : ''}
+
+        <div class="quad-body-actions">
+          <button class="btn-danger" type="button" data-delquad="${q.id}">Delete quadrat</button>
+        </div>
+      </div>
+    `;
+    wrap.appendChild(card);
+  });
+
+  if(draft.quadrats.length === 0){
+    wrap.innerHTML = '<div class="empty"><p><strong>No quadrats yet.</strong></p><p>Tap "Add quadrat" below to start recording.</p></div>';
+  }
+
+  // wire events
+  wrap.querySelectorAll('[data-toggle]').forEach(el=>{
+    el.addEventListener('click', ()=>toggleQuadrat(el.dataset.toggle));
+  });
+  wrap.querySelectorAll('[data-delquad]').forEach(el=>{
+    el.addEventListener('click', (e)=>{ e.stopPropagation(); if(confirm('Delete this quadrat and all its crab records?')) removeQuadrat(el.dataset.delquad); });
+  });
+  wrap.querySelectorAll('[data-addcrab]').forEach(el=>{
+    el.addEventListener('click', (e)=>{ e.stopPropagation(); addCrab(el.dataset.addcrab); });
+  });
+  wrap.querySelectorAll('[data-qfield]').forEach(el=>{
+    el.addEventListener('click', e=>e.stopPropagation());
+    el.addEventListener('input', (e)=>{
+      const q = draft.quadrats.find(x=>x.id===e.target.dataset.qid);
+      if(!q) return;
+      const field = e.target.dataset.qfield;
+      q[field] = e.target.value;
+      if(field === 'crabsFound'){ renderQuadList(); }
+      else {
+        // update summary text live without full re-render
+        const head = wrap.querySelector(`.quad-head[data-toggle="${q.id}"] .sub`);
+        if(head) head.textContent = `${q.emptyBurrows!==''? q.emptyBurrows+' empty burrows · ':''}Crabs found: ${q.crabsFound==='yes'?'Yes ('+q.crabs.length+')':'No'}`;
+      }
+      autosaveDraft(false);
+    });
+  });
+  wrap.querySelectorAll('[data-cfield]').forEach(el=>{
+    el.addEventListener('click', e=>e.stopPropagation());
+    el.addEventListener('input', (e)=>{
+      const q = draft.quadrats.find(x=>x.id===e.target.dataset.qid);
+      if(!q) return;
+      const c = q.crabs.find(x=>x.id===e.target.dataset.cid);
+      if(!c) return;
+      const field = e.target.dataset.cfield;
+      c[field] = e.target.value;
+      if(field === 'sex'){ renderQuadList(); }
+      autosaveDraft(false);
+    });
+  });
+  wrap.querySelectorAll('[data-delcrab]').forEach(el=>{
+    el.addEventListener('click', (e)=>{ e.stopPropagation(); removeCrab(el.dataset.qid, el.dataset.delcrab); });
+  });
+}
+
+function renderCrabEntry(quadId, c, idx){
+  return `
+    <div class="crab-entry">
+      <span class="idx">Crab ${idx+1}</span>
+      <button class="remove" type="button" data-qid="${quadId}" data-delcrab="${c.id}" title="Remove">✕</button>
+
+      <label class="first">Species</label>
+      <select data-cfield="species" data-qid="${quadId}" data-cid="${c.id}">
+        ${['Scylla serrata','Scylla olivacea','Scylla paramamosain','Scylla tranquebarica'].map(s=>`<option ${c.species===s?'selected':''}>${s}</option>`).join('')}
+      </select>
+
+      <div class="row2">
+        <div>
+          <label>Sex</label>
+          <select data-cfield="sex" data-qid="${quadId}" data-cid="${c.id}">
+            ${['Male','Female'].map(s=>`<option ${c.sex===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label>Molted</label>
+          <select data-cfield="molted" data-qid="${quadId}" data-cid="${c.id}">
+            ${['No','Yes'].map(s=>`<option ${c.molted===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      ${c.sex === 'Female' ? `
+        <label>Berried</label>
+        <select data-cfield="berried" data-qid="${quadId}" data-cid="${c.id}">
+          ${['No','Yes'].map(s=>`<option ${c.berried===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      ` : ''}
+
+      <div class="row2">
+        <div>
+          <label>Carapace Width (mm)</label>
+          <input type="number" min="0" step="1" data-cfield="carapaceWidth" data-qid="${quadId}" data-cid="${c.id}" value="${c.carapaceWidth}">
+        </div>
+        <div>
+          <label>Weight (g)</label>
+          <input type="number" min="0" step="1" data-cfield="weight" data-qid="${quadId}" data-cid="${c.id}" value="${c.weight}">
+        </div>
+      </div>
+
+      <label>Gear Used</label>
+      <select data-cfield="gearUsed" data-qid="${quadId}" data-cid="${c.id}">
+        ${['Mangrove Hooks','Hand Collection','Traps','Others'].map(s=>`<option ${c.gearUsed===s?'selected':''}>${s}</option>`).join('')}
+      </select>
+
+      <label>Effort (minutes)</label>
+      <input type="number" min="0" step="1" data-cfield="effort" data-qid="${quadId}" data-cid="${c.id}" value="${c.effort}">
+    </div>
+  `;
+}
+document.getElementById('addQuadBtn').addEventListener('click', addQuadrat);
+
+/* ================= Review ================= */
+function renderReview(){
+  pullFormIntoDraft();
+  const el = document.getElementById('reviewContent');
+  const totalCrabs = draft.quadrats.reduce((n,q)=>n+q.crabs.length,0);
+  let html = `
+    <div class="card review-block">
+      <h3>Survey Information</h3>
+      <div class="review-line"><span class="k">Start Time</span><span class="v">${draft.startTime||'—'}</span></div>
+      <div class="review-line"><span class="k">Date</span><span class="v">${draft.date||'—'}</span></div>
+      <div class="review-line"><span class="k">Surveyor 1</span><span class="v">${escapeHtml(draft.surveyor1)||'—'}</span></div>
+      <div class="review-line"><span class="k">Province</span><span class="v">${escapeHtml(draft.province)||'—'}</span></div>
+      <div class="review-line"><span class="k">LLG</span><span class="v">${escapeHtml(draft.llg)||'—'}</span></div>
+      <div class="review-line"><span class="k">Sampling Site</span><span class="v">${escapeHtml(draft.samplingSite)||'—'}</span></div>
+      <div class="review-line"><span class="k">Tide Condition</span><span class="v">${draft.tideCondition}</span></div>
+    </div>
+    <div class="card review-block">
+      <h3>Quadrat Data (${draft.quadrats.length} quadrat${draft.quadrats.length===1?'':'s'}, ${totalCrabs} crab${totalCrabs===1?'':'s'})</h3>
+      ${draft.quadrats.length===0 ? '<p class="help">No quadrats recorded.</p>' : draft.quadrats.map((q,qi)=>`
+        <div class="review-quad">
+          <div class="q-ttl">Quadrat ${qi+1} — ${q.emptyBurrows||0} empty burrows — Crabs found: ${q.crabsFound==='yes'?'Yes':'No'}</div>
+          ${q.crabs.map((c,ci)=>`
+            <div class="review-crab">Crab ${ci+1}: ${c.species}, ${c.sex}${c.sex==='Female'?', berried: '+c.berried:''}, molted: ${c.molted}, CW ${c.carapaceWidth||'?'}mm, ${c.weight||'?'}g, ${c.gearUsed}, ${c.effort||'?'} min</div>
+          `).join('')}
+        </div>
+      `).join('')}
+    </div>
+    <div class="card review-block">
+      <h3>End of Survey</h3>
+      <div class="review-line"><span class="k">Comments</span><span class="v">${escapeHtml(draft.comments)||'—'}</span></div>
+      <div class="review-line"><span class="k">GPS</span><span class="v">${draft.gps ? draft.gps.lat.toFixed(5)+', '+draft.gps.lon.toFixed(5)+' (±'+Math.round(draft.gps.accuracy)+'m)' : '—'}</span></div>
+      <div class="review-line"><span class="k">End Time</span><span class="v">${draft.endTime||'—'}</span></div>
+    </div>
+  `;
+  el.innerHTML = html;
+}
+
+/* ================= Submit ================= */
+async function submitSurvey(){
+  pullFormIntoDraft();
+  if(!draft.surveyor1.trim() || !draft.samplingSite.trim()){
+    toast('Missing required info — check Survey Information.');
+    goToStep(1);
+    return;
+  }
+  const record = Object.assign({}, draft, {
+    id: uid('srv'),
+    synced: false,
+    savedAt: new Date().toISOString()
+  });
+  await idbPut('surveys', record);
+  await idbDelete('drafts', 'current');
+  toast('Survey submitted and saved locally ✔');
+  draft = blankDraft();
+  quadCounter = 0; crabCounter = 0; capturedGps = null;
+  pushDraftIntoForm();
+  goToStep(1);
+  refreshUnsyncedBadge();
+}
+
+/* ================= Records tab ================= */
+async function renderRecords(){
+  const all = await idbGetAll('surveys');
+  all.sort((a,b)=> (b.savedAt||'').localeCompare(a.savedAt||''));
+  document.getElementById('statTotal').textContent = all.length;
+  document.getElementById('statCrabs').textContent = all.reduce((n,s)=>n + s.quadrats.reduce((m,q)=>m+q.crabs.length,0), 0);
+  document.getElementById('statUnsynced').textContent = all.filter(s=>!s.synced).length;
+
+  const wrap = document.getElementById('recordsList');
+  wrap.innerHTML = '';
+  if(all.length === 0){
+    wrap.innerHTML = '<div class="empty"><p><strong>No submitted surveys yet.</strong></p><p>Surveys you submit will appear here, on this device, even with no signal.</p></div>';
+    return;
+  }
+  all.forEach(rec=>{
+    const crabCount = rec.quadrats.reduce((m,q)=>m+q.crabs.length,0);
+    const div = document.createElement('div');
+    div.className = 'record-card' + (rec.synced ? '' : ' unsynced');
+    div.innerHTML = `
+      <div class="record-top">
+        <div><h3>${escapeHtml(rec.samplingSite || 'Untitled site')}</h3></div>
+        <span class="badge ${rec.synced?'synced':'unsynced'}">${rec.synced?'Synced':'Not synced'}</span>
+      </div>
+      <div class="record-meta">
+        ${rec.date||''} ${rec.startTime||''} · ${rec.province||''} ${rec.llg?('· '+rec.llg):''}<br>
+        ${rec.quadrats.length} quadrat(s) · ${crabCount} crab(s) · Surveyor: ${escapeHtml(rec.surveyor1||'—')}
+      </div>
+      <div class="record-actions">
+        <button class="btn-ghost" type="button" data-viewrec="${rec.id}">View details</button>
+        <button class="btn-danger" type="button" data-delrec="${rec.id}">Delete</button>
+      </div>
+    `;
+    wrap.appendChild(div);
+  });
+  wrap.querySelectorAll('[data-viewrec]').forEach(el=> el.addEventListener('click', ()=>viewRecord(el.dataset.viewrec)));
+  wrap.querySelectorAll('[data-delrec]').forEach(el=> el.addEventListener('click', async ()=>{
+    if(confirm('Delete this survey permanently?')){ await idbDelete('surveys', el.dataset.delrec); renderRecords(); refreshUnsyncedBadge(); }
+  }));
+}
+async function viewRecord(id){
+  const all = await idbGetAll('surveys');
+  const rec = all.find(r=>r.id===id);
+  if(!rec) return;
+  let msg = `Site: ${rec.samplingSite}\nDate: ${rec.date} ${rec.startTime}–${rec.endTime}\nSurveyor: ${rec.surveyor1}\nProvince/LLG: ${rec.province} / ${rec.llg}\nTide: ${rec.tideCondition}\nGPS: ${rec.gps? rec.gps.lat.toFixed(5)+', '+rec.gps.lon.toFixed(5):'none'}\nComments: ${rec.comments||'—'}\n\n`;
+  rec.quadrats.forEach((q,qi)=>{
+    msg += `Quadrat ${qi+1}: ${q.emptyBurrows||0} empty burrows, crabs found: ${q.crabsFound}\n`;
+    q.crabs.forEach((c,ci)=>{
+      msg += `  Crab ${ci+1}: ${c.species}, ${c.sex}, CW ${c.carapaceWidth||'?'}mm, ${c.weight||'?'}g, ${c.gearUsed}\n`;
+    });
+  });
+  alert(msg);
+}
+
+/* ================= Export ================= */
+document.getElementById('exportJsonBtn').addEventListener('click', async ()=>{
+  const all = await idbGetAll('surveys');
+  downloadFile('mudcrab_surveys_backup_'+Date.now()+'.json', JSON.stringify(all,null,2), 'application/json');
+  toast('JSON backup downloaded');
+});
+document.getElementById('exportCsvBtn').addEventListener('click', async ()=>{
+  const all = await idbGetAll('surveys');
+  const headers = ['survey_id','start_time','date','surveyor1','province','llg','sampling_site','tide_condition','comments','lat','lon','gps_accuracy_m','end_time','synced',
+    'quadrat_number','empty_burrows','crabs_found','crab_index','species','sex','berried','molted','carapace_width_mm','weight_g','gear_used','effort_minutes'];
+  const rows = [headers.join(',')];
+  all.forEach(rec=>{
+    const base = [rec.id,rec.startTime,rec.date,rec.surveyor1,rec.province,rec.llg,rec.samplingSite,rec.tideCondition,rec.comments,
+      rec.gps?rec.gps.lat:'', rec.gps?rec.gps.lon:'', rec.gps?rec.gps.accuracy:'', rec.endTime, rec.synced];
+    if(rec.quadrats.length === 0){
+      rows.push(base.concat(['','','','','','','','','','','','']).map(escapeCsv).join(','));
+    } else {
+      rec.quadrats.forEach((q, qi)=>{
+        if(q.crabs.length === 0){
+          rows.push(base.concat([qi+1, q.emptyBurrows, q.crabsFound,'','','','','','','','','']).map(escapeCsv).join(','));
+        } else {
+          q.crabs.forEach((c,ci)=>{
+            rows.push(base.concat([qi+1, q.emptyBurrows, q.crabsFound, ci+1, c.species, c.sex, c.berried, c.molted, c.carapaceWidth, c.weight, c.gearUsed, c.effort]).map(escapeCsv).join(','));
+          });
+        }
+      });
+    }
+  });
+  downloadFile('mudcrab_surveys_'+Date.now()+'.csv', rows.join('\n'), 'text/csv');
+  toast('CSV exported');
+});
+
+/* ================= Sync ================= */
+async function refreshSyncTab(){
+  const all = await idbGetAll('surveys');
+  const pending = all.filter(s=>!s.synced);
+  document.getElementById('syncCount').textContent = pending.length;
+  document.getElementById('syncBtn').disabled = pending.length===0 || !settings.serverUrl;
+}
+function logSync(line){
+  const log = document.getElementById('syncLog');
+  log.textContent += line + '\n';
+  log.scrollTop = log.scrollHeight;
+}
+document.getElementById('syncBtn').addEventListener('click', async ()=>{
+  if(!settings.serverUrl){ toast('Set a server URL in Settings first.'); return; }
+  if(!navigator.onLine){ toast('No connection right now — try again when back in range.'); return; }
+  const all = await idbGetAll('surveys');
+  const pending = all.filter(s=>!s.synced);
+  const log = document.getElementById('syncLog');
+  log.textContent = '';
+  logSync(`Starting sync of ${pending.length} survey(s) to ${settings.serverUrl} …`);
+  let okCount=0, failCount=0;
+  for(const rec of pending){
+    try{
+      const res = await fetch(settings.serverUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(rec) });
+      if(res.ok){ rec.synced = true; await idbPut('surveys', rec); okCount++; logSync(`✓ Synced ${rec.samplingSite} (${rec.date})`); }
+      else { failCount++; logSync(`✗ Server rejected ${rec.samplingSite} — HTTP ${res.status}`); }
+    }catch(err){ failCount++; logSync(`✗ Failed to send ${rec.samplingSite} — ${err.message}`); }
+  }
+  logSync(`Done. ${okCount} synced, ${failCount} failed.`);
+  toast(`Sync finished: ${okCount} synced, ${failCount} failed`);
+  refreshUnsyncedBadge(); refreshSyncTab();
+});
+
+/* ================= Settings ================= */
+async function loadSettings(){
+  const s = await idbGet('settings','main');
+  if(s) settings = s.value;
+  document.getElementById('s_surveyor').value = settings.surveyor || '';
+  document.getElementById('s_serverUrl').value = settings.serverUrl || '';
+}
+document.getElementById('saveSettingsBtn').addEventListener('click', async ()=>{
+  settings.surveyor = document.getElementById('s_surveyor').value.trim();
+  settings.serverUrl = document.getElementById('s_serverUrl').value.trim();
+  await idbPut('settings', { key:'main', value: settings });
+  if(draft && !draft.surveyor1) { draft.surveyor1 = settings.surveyor; document.getElementById('f_surveyor1').value = settings.surveyor; }
+  toast('Settings saved');
+  refreshSyncTab();
+});
+document.getElementById('wipeBtn').addEventListener('click', async ()=>{
+  if(confirm('This deletes ALL submitted surveys AND the current draft on this device permanently. Export a backup first. Continue?')){
+    if(confirm('Are you absolutely sure? This cannot be undone.')){
+      await idbClear('surveys');
+      await idbClear('drafts');
+      draft = blankDraft(); quadCounter=0; crabCounter=0; capturedGps=null;
+      pushDraftIntoForm();
+      toast('All local data deleted');
+      renderRecords(); refreshUnsyncedBadge();
+    }
+  }
+});
+
+/* ================= Init ================= */
+(async function init(){
+  showAuthLoading();
+
+  const isInviteFlow = await checkForInviteLink();
+
+  if(!isInviteFlow){
+    const { data:{ session } } = await supabaseClient.auth.getSession();
+    if(session && session.user){
+      currentUser = session.user;
+      let name = currentUser.user_metadata && currentUser.user_metadata.full_name;
+      document.getElementById('userEmailLabel').textContent = name ? `${name} · ${currentUser.email}` : currentUser.email;
+      hideAuthScreen();
+      if(!name){
+        name = await syncFullNameFromRequest(currentUser);
+        if(name) document.getElementById('userEmailLabel').textContent = `${name} · ${currentUser.email}`;
+      }
+    } else {
+      showAuthScreen();
+    }
+  }
+
+  await openDb();
+  await loadSettings();
+  updateOnlineStatus();
+
+  let resumedDraft = false;
+  const savedDraft = await idbGet('drafts','current');
+  if(savedDraft && savedDraft.value && (savedDraft.value.surveyor1 || savedDraft.value.samplingSite || savedDraft.value.quadrats.length)){
+    if(confirm('An unfinished Mud Crab Survey draft was found on this device. Resume it?')){
+      draft = savedDraft.value;
+      draft.quadrats.forEach(q=>{ quadCounter++; q.crabs.forEach(()=>crabCounter++); });
+      resumedDraft = true;
+    } else {
+      draft = blankDraft();
+      await idbDelete('drafts','current');
+    }
+  } else {
+    draft = blankDraft();
+    draft.surveyor1 = settings.surveyor || '';
+  }
+
+  const now = new Date();
+  if(!draft.date) draft.date = now.toISOString().slice(0,10);
+  if(!draft.startTime) draft.startTime = now.toTimeString().slice(0,5);
+
+  pushDraftIntoForm();
+  goToStep(1);
+  if(resumedDraft){ showMudCrabModule(); } else { showModuleMenu(); }
+})();
+</script>
+</body>
+</html>
