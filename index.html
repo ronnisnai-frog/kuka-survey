@@ -448,7 +448,7 @@
     <div class="card">
       <div class="eyebrow">When back in network range</div>
       <h2>Sync to server</h2>
-      <p class="help">Sends unsynced surveys to the server URL set in Settings. Safe to retry — already-synced records are skipped.</p>
+      <p class="help">Sends unsynced surveys to your KUKA account. Safe to retry — already-synced records are skipped.</p>
       <button class="btn btn-primary btn-block" id="syncBtn" type="button">Sync now (<span id="syncCount">0</span> pending)</button>
       <div id="syncLog"></div>
     </div>
@@ -478,8 +478,8 @@
         <option>Ronnis Nai</option>
       </select>
       <label>Server sync URL</label>
-      <input type="text" id="s_serverUrl" placeholder="https://your-server.example/api/mudcrab-surveys">
-      <p class="help">Leave blank until your data manager provides one — export still works fully offline.</p>
+      <input type="text" id="s_serverUrl" placeholder="https://your-server.example/api/mudcrab-surveys" style="display:none;">
+      <p class="help">Surveys sync directly to your KUKA account when you tap "Sync now" — no setup needed here.</p>
       <button class="btn btn-secondary btn-block" id="saveSettingsBtn" type="button" style="margin-top:14px;">Save settings</button>
     </div>
     <div class="card">
@@ -1307,7 +1307,7 @@ async function refreshSyncTab(){
   const all = await idbGetAll('surveys');
   const pending = all.filter(s=>!s.synced);
   document.getElementById('syncCount').textContent = pending.length;
-  document.getElementById('syncBtn').disabled = pending.length===0 || !settings.serverUrl;
+  document.getElementById('syncBtn').disabled = pending.length===0 || !currentUser;
 }
 function logSync(line){
   const log = document.getElementById('syncLog');
@@ -1315,19 +1315,34 @@ function logSync(line){
   log.scrollTop = log.scrollHeight;
 }
 document.getElementById('syncBtn').addEventListener('click', async ()=>{
-  if(!settings.serverUrl){ toast('Set a server URL in Settings first.'); return; }
+  if(!currentUser){ toast('You must be logged in to sync.'); return; }
   if(!navigator.onLine){ toast('No connection right now — try again when back in range.'); return; }
   const all = await idbGetAll('surveys');
   const pending = all.filter(s=>!s.synced);
   const log = document.getElementById('syncLog');
   log.textContent = '';
-  logSync(`Starting sync of ${pending.length} survey(s) to ${settings.serverUrl} …`);
+  logSync(`Starting sync of ${pending.length} survey(s) to your KUKA account…`);
   let okCount=0, failCount=0;
   for(const rec of pending){
     try{
-      const res = await fetch(settings.serverUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(rec) });
-      if(res.ok){ rec.synced = true; await idbPut('surveys', rec); okCount++; logSync(`✓ Synced ${rec.samplingSite} (${rec.date})`); }
-      else { failCount++; logSync(`✗ Server rejected ${rec.samplingSite} — HTTP ${res.status}`); }
+      const row = {
+        id: rec.id,
+        user_id: currentUser.id,
+        surveyor1: rec.surveyor1,
+        start_time: rec.startTime,
+        survey_date: rec.date,
+        province: rec.province,
+        llg: rec.llg,
+        sampling_site: rec.samplingSite,
+        tide_condition: rec.tideCondition,
+        quadrats: rec.quadrats,
+        comments: rec.comments,
+        gps: rec.gps,
+        end_time: rec.endTime
+      };
+      const { error } = await supabaseClient.from('surveys').upsert(row);
+      if(!error){ rec.synced = true; await idbPut('surveys', rec); okCount++; logSync(`✓ Synced ${rec.samplingSite} (${rec.date})`); }
+      else { failCount++; logSync(`✗ Rejected ${rec.samplingSite} — ${error.message}`); }
     }catch(err){ failCount++; logSync(`✗ Failed to send ${rec.samplingSite} — ${err.message}`); }
   }
   logSync(`Done. ${okCount} synced, ${failCount} failed.`);
@@ -1340,11 +1355,9 @@ async function loadSettings(){
   const s = await idbGet('settings','main');
   if(s) settings = s.value;
   document.getElementById('s_surveyor').value = settings.surveyor || '';
-  document.getElementById('s_serverUrl').value = settings.serverUrl || '';
 }
 document.getElementById('saveSettingsBtn').addEventListener('click', async ()=>{
   settings.surveyor = document.getElementById('s_surveyor').value.trim();
-  settings.serverUrl = document.getElementById('s_serverUrl').value.trim();
   await idbPut('settings', { key:'main', value: settings });
   if(draft && !draft.surveyor1) { draft.surveyor1 = settings.surveyor; document.getElementById('f_surveyor1').value = settings.surveyor; }
   toast('Settings saved');
