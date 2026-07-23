@@ -80,20 +80,20 @@
   .local-tab-content{ display:none; }
   .local-tab-content.active{ display:block; }
 
-  #progress{ display:flex; align-items:center; margin-bottom:18px; }
-  #progress .step{ flex:1; text-align:center; position:relative; }
-  #progress .step .circ{
+  #progress, #seProgress, #bioProgress{ display:flex; align-items:center; margin-bottom:18px; flex-wrap:wrap; }
+  #progress .step, #seProgress .step, #bioProgress .step{ flex:1; text-align:center; position:relative; min-width:11%; margin-bottom:8px; }
+  #progress .step .circ, #seProgress .step .circ, #bioProgress .step .circ{
     width:28px; height:28px; border-radius:50%; background:var(--paper); border:2px solid var(--line);
     color:var(--tide); font-size:0.78rem; font-weight:700; display:flex; align-items:center; justify-content:center;
     margin:0 auto 5px auto; transition:all .2s ease;
   }
-  #progress .step.done .circ{ background:var(--mangrove-mid); border-color:var(--mangrove-mid); color:#fff; }
-  #progress .step.active .circ{ background:var(--shell); border-color:var(--shell); color:#fff; }
-  #progress .step .lbl{ font-size:0.62rem; text-transform:uppercase; letter-spacing:0.3px; color:var(--tide); font-weight:700; }
-  #progress .step.active .lbl{ color:var(--shell-dim); }
-  #progress .bar{ position:absolute; top:14px; left:-50%; width:100%; height:2px; background:var(--line); z-index:-1; }
-  #progress .step.done .bar, #progress .step.active .bar{ background:var(--mangrove-mid); }
-  #progress .step:first-child .bar{ display:none; }
+  #progress .step.done .circ, #seProgress .step.done .circ, #bioProgress .step.done .circ{ background:var(--mangrove-mid); border-color:var(--mangrove-mid); color:#fff; }
+  #progress .step.active .circ, #seProgress .step.active .circ, #bioProgress .step.active .circ{ background:var(--shell); border-color:var(--shell); color:#fff; }
+  #progress .step .lbl, #seProgress .step .lbl, #bioProgress .step .lbl{ font-size:0.62rem; text-transform:uppercase; letter-spacing:0.3px; color:var(--tide); font-weight:700; }
+  #progress .step.active .lbl, #seProgress .step.active .lbl, #bioProgress .step.active .lbl{ color:var(--shell-dim); }
+  #progress .bar, #seProgress .bar, #bioProgress .bar{ position:absolute; top:14px; left:-50%; width:100%; height:2px; background:var(--line); z-index:-1; }
+  #progress .step.done .bar, #progress .step.active .bar, #seProgress .step.done .bar, #seProgress .step.active .bar, #bioProgress .step.done .bar, #bioProgress .step.active .bar{ background:var(--mangrove-mid); }
+  #progress .step:first-child .bar, #seProgress .step:first-child .bar, #bioProgress .step:first-child .bar{ display:none; }
 
   .card{ background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:14px; }
 
@@ -216,6 +216,13 @@
   .modal-card h3{ color:var(--sand); font-size:1.1rem; margin-bottom:10px; }
   .modal-card p{ font-size:0.9rem; line-height:1.5; color:#D8E4DD; margin:0 0 18px 0; }
   .modal-actions{ display:flex; gap:10px; justify-content:flex-end; }
+
+  .check-group{ display:flex; flex-direction:column; gap:2px; margin-top:2px; }
+  .check-opt{ display:flex; align-items:center; gap:8px; font-size:0.92rem; font-weight:500; text-transform:none;
+    letter-spacing:normal; color:var(--ink); padding:8px 2px; border-bottom:1px solid var(--sand-dim); margin:0; }
+  .check-opt input[type=checkbox]{ width:18px; height:18px; flex:none; accent-color:var(--shell); }
+  .month-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:0 10px; }
+  .month-grid .check-opt{ border-bottom:none; padding:6px 2px; }
 </style>
 </head>
 <body>
@@ -360,14 +367,14 @@
     <div class="local-tab-content active" data-localcontent="survey">
       <div id="coconutList">
         <h2 style="margin-bottom:14px;">Choose a form</h2>
-        <div class="module-card" data-openplaceholder="Biological Data Collection">
+        <div class="module-card" id="openBiological">
           <div class="module-icon">🧬</div>
-          <div class="module-txt"><h3>Biological Data Collection</h3><p>Coming soon</p></div>
+          <div class="module-txt"><h3>Biological Survey</h3><p>Bait stations &amp; coconut crab measurements</p></div>
           <div class="module-arrow">▶</div>
         </div>
-        <div class="module-card" data-openplaceholder="Socio-economic Data Collection">
+        <div class="module-card" id="openSocioeconomic">
           <div class="module-icon">👥</div>
-          <div class="module-txt"><h3>Socio-economic Data Collection</h3><p>Coming soon</p></div>
+          <div class="module-txt"><h3>Socio-economic Survey</h3><p>Livelihood, harvesting, market &amp; local knowledge survey</p></div>
           <div class="module-arrow">▶</div>
         </div>
       </div>
@@ -379,9 +386,526 @@
           <p class="help">This form has not been designed yet. Questionnaire fields will be added here once the survey specification is provided.</p>
         </div>
       </div>
+
+      <!-- ============ SOCIO-ECONOMIC WIZARD ============ -->
+      <div id="socioWizard" style="display:none;">
+        <button class="module-back" type="button" id="socioBack">◀ Coconut Crab Survey</button>
+
+        <div id="seProgress">
+          <div class="step active" data-sestep="1"><div class="bar"></div><div class="circ">1</div><div class="lbl">Surveyor</div></div>
+          <div class="step" data-sestep="2"><div class="bar"></div><div class="circ">2</div><div class="lbl">Respondent</div></div>
+          <div class="step" data-sestep="3"><div class="bar"></div><div class="circ">3</div><div class="lbl">Income</div></div>
+          <div class="step" data-sestep="4"><div class="bar"></div><div class="circ">4</div><div class="lbl">Food</div></div>
+          <div class="step" data-sestep="5"><div class="bar"></div><div class="circ">5</div><div class="lbl">Effort</div></div>
+          <div class="step" data-sestep="6"><div class="bar"></div><div class="circ">6</div><div class="lbl">Market</div></div>
+          <div class="step" data-sestep="7"><div class="bar"></div><div class="circ">7</div><div class="lbl">Biology</div></div>
+          <div class="step" data-sestep="8"><div class="bar"></div><div class="circ">8</div><div class="lbl">Rules</div></div>
+          <div class="step" data-sestep="9"><div class="bar"></div><div class="circ">9</div><div class="lbl">Outlook</div></div>
+          <div class="step" data-sestep="10"><div class="bar"></div><div class="circ">10</div><div class="lbl">Review</div></div>
+        </div>
+
+        <!-- Step 1: Surveyor Information -->
+        <div class="se-step" data-sewstep="1">
+          <div class="card">
+            <div class="eyebrow">Step 1 of 10 — Surveyor Information</div>
+            <h2>Surveyor Information</h2>
+            <label class="first">Surveyor 1</label>
+            <select id="se_surveyor1">
+              <option value="">Select surveyor…</option>
+              <option>Olisasha Dandava</option><option>Nickson Palg</option><option>Nathan Tony</option>
+              <option>Joan Kumba</option><option>Jeremy Marisimba</option><option>Ronnis Nai</option>
+            </select>
+            <label>Date</label>
+            <input type="date" id="se_date">
+            <label>Contact Details</label>
+            <input type="text" id="se_site" placeholder="Surveyor phone / contact">
+          </div>
+        </div>
+
+        <!-- Step 2: Section A - Respondent Information -->
+        <div class="se-step" data-sewstep="2" style="display:none;">
+          <div class="card">
+            <div class="eyebrow">Step 2 of 10 — Section A</div>
+            <h2>Respondent Information</h2>
+
+            <label class="first">Full Name</label>
+            <input type="text" id="se_resp_fullname">
+
+            <label>Gender</label>
+            <select id="se_resp_gender">
+              <option value="">Select…</option><option>Male</option><option>Female</option>
+            </select>
+
+            <label>Age</label>
+            <input type="number" min="0" step="1" id="se_resp_age">
+
+            <label>Marital Status</label>
+            <select id="se_resp_marital">
+              <option value="">Select…</option><option>Single</option><option>Married</option><option>Widowed</option>
+            </select>
+
+            <label>Province</label>
+            <select id="se_resp_province">
+              <option value="">Select…</option>
+              <option>Milne Bay Province</option>
+              <option>New Ireland Province</option>
+              <option>Manus Province</option>
+              <option>Autonomous Region of Bougainville</option>
+            </select>
+
+            <label>District</label>
+            <input type="text" id="se_resp_district">
+
+            <label>LLG</label>
+            <input type="text" id="se_resp_llg">
+
+            <label>Village</label>
+            <input type="text" id="se_resp_village">
+
+            <label>Contact Details</label>
+            <input type="text" id="se_resp_contact" placeholder="Respondent phone / contact">
+          </div>
+        </div>
+
+        <!-- Step 3: Section B - Livelihood and Income (Q1-7) -->
+        <div class="se-step" data-sewstep="3" style="display:none;">
+          <div class="card">
+            <div class="eyebrow">Step 3 of 10 — Section B</div>
+            <h2>Livelihood and Income</h2>
+
+            <label class="first">1. Do you harvest coconut crabs?</label>
+            <select id="se_q1_harvest">
+              <option value="">Select…</option><option>Yes</option><option>No</option>
+            </select>
+
+            <label>2. Purpose of harvesting (tick all that apply)</label>
+            <div class="check-group" id="se_q2_purpose">
+              <label class="check-opt"><input type="checkbox" value="Sale"> Sale</label>
+              <label class="check-opt"><input type="checkbox" value="Home consumption"> Home consumption</label>
+              <label class="check-opt"><input type="checkbox" value="Customary Ceremonies"> Customary Ceremonies</label>
+            </div>
+
+            <label>3. Is coconut crab harvesting your main source of income?</label>
+            <select id="se_q3_mainincome">
+              <option value="">Select…</option><option>Yes</option><option>No</option>
+            </select>
+            <div id="se_q3_explain_wrap" style="display:none;">
+              <label>If No, explain</label>
+              <input type="text" id="se_q3_explain">
+            </div>
+
+            <label>4. What are other income generating activities you do?</label>
+            <textarea id="se_q4_otherincome"></textarea>
+
+            <label>5. Estimate your average income from coconut crab sales</label>
+            <div class="row2">
+              <div>
+                <select id="se_q5_freq">
+                  <option value="">Frequency…</option>
+                  <option>Daily</option><option>Weekly</option><option>Monthly</option><option>Seasonal</option>
+                </select>
+              </div>
+              <div>
+                <input type="text" id="se_q5_amount" placeholder="Amount (K)">
+              </div>
+            </div>
+
+            <label>6. How many years have you been harvesting Coconut Crab?</label>
+            <input type="number" min="0" step="1" id="se_q6_years">
+
+            <label>7. Has income from coconut crab changed over the past 5 years?</label>
+            <select id="se_q7_incomechange">
+              <option value="">Select…</option><option>Increased</option><option>Decreased</option><option>No change</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Step 3: Section C - Food Security (Q8-10) -->
+        <div class="se-step" data-sewstep="4" style="display:none;">
+          <div class="card">
+            <div class="eyebrow">Step 4 of 10 — Section C</div>
+            <h2>Food Security and Household Use</h2>
+
+            <label class="first">8. How often does your household consume coconut crab?</label>
+            <select id="se_q8_consumefreq">
+              <option value="">Select…</option><option>Frequently</option><option>Occasionally</option><option>Rarely</option><option>Never</option>
+            </select>
+
+            <label>9. Is coconut crab an important protein source for your household?</label>
+            <select id="se_q9_protein">
+              <option value="">Select…</option><option>Yes</option><option>No</option>
+            </select>
+
+            <label>10. Have changes in coconut crab availability affected your household food supply?</label>
+            <select id="se_q10_foodsupply">
+              <option value="">Select…</option><option>Yes</option><option>No</option>
+            </select>
+            <div id="se_q10_explain_wrap" style="display:none;">
+              <label>If Yes, explain</label>
+              <input type="text" id="se_q10_explain">
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: Section D - Harvesting Effort and Practices (Q11-17) -->
+        <div class="se-step" data-sewstep="5" style="display:none;">
+          <div class="card">
+            <div class="eyebrow">Step 5 of 10 — Section D</div>
+            <h2>Harvesting Effort and Practices</h2>
+
+            <label class="first">11. How many days per week do you harvest coconut crabs?</label>
+            <input type="number" min="0" step="1" id="se_q11_days">
+
+            <label>12. Average time spent per trip (hours)</label>
+            <input type="number" min="0" step="0.5" id="se_q12_hours">
+
+            <label>13. Compared to previous years, catching coconut crabs is now</label>
+            <select id="se_q13_catchtrend">
+              <option value="">Select…</option><option>Easier</option><option>Same</option><option>Harder</option>
+            </select>
+
+            <label>14. Have you noticed any changes in the size of coconut crabs caught?</label>
+            <select id="se_q14_sizechange">
+              <option value="">Select…</option><option>Larger</option><option>Smaller</option><option>No change</option>
+            </select>
+
+            <label>15. What methods do you use to harvest coconut crabs? (Tick all that apply)</label>
+            <div class="check-group" id="se_q15_methods">
+              <label class="check-opt"><input type="checkbox" value="Hand collection"> Hand collection</label>
+              <label class="check-opt"><input type="checkbox" value="Baited traps"> Baited traps</label>
+              <label class="check-opt"><input type="checkbox" value="Night hunting with torch/light"> Night hunting with torch/light</label>
+              <label class="check-opt"><input type="checkbox" value="Other"> Other</label>
+            </div>
+            <div id="se_q15_other_wrap" style="display:none;">
+              <label>Other, specify</label>
+              <input type="text" id="se_q15_other">
+            </div>
+
+            <label>16. What materials do you usually use to harvest coconut crab?</label>
+            <textarea id="se_q16_materials"></textarea>
+
+            <label>17. Do you selectively harvest based on size or sex?</label>
+            <select id="se_q17_selective">
+              <option value="">Select…</option><option>Yes</option><option>No</option>
+            </select>
+            <div id="se_q17_explain_wrap" style="display:none;">
+              <label>If Yes, explain</label>
+              <input type="text" id="se_q17_explain">
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 5: Section E - Market and Trade (Q18-20) -->
+        <div class="se-step" data-sewstep="6" style="display:none;">
+          <div class="card">
+            <div class="eyebrow">Step 6 of 10 — Section E</div>
+            <h2>Market and Trade</h2>
+
+            <label class="first">18. Where do you sell coconut crabs?</label>
+            <div class="check-group" id="se_q18_sellwhere">
+              <label class="check-opt"><input type="checkbox" value="Local market"> Local market</label>
+              <label class="check-opt"><input type="checkbox" value="Roadside"> Roadside</label>
+              <label class="check-opt"><input type="checkbox" value="Middlemen"> Middlemen</label>
+              <label class="check-opt"><input type="checkbox" value="Licensed Buyer"> Licensed Buyer</label>
+              <label class="check-opt"><input type="checkbox" value="Other"> Other</label>
+            </div>
+            <div id="se_q18_other_wrap" style="display:none;">
+              <label>Other, specify</label>
+              <input type="text" id="se_q18_other">
+            </div>
+
+            <label>19. Average selling price of coconut crab per size</label>
+            <div class="row2">
+              <div><label class="first" style="margin-top:0;">Small (K)</label><input type="text" id="se_q19_small"></div>
+              <div><label class="first" style="margin-top:0;">Medium (K)</label><input type="text" id="se_q19_medium"></div>
+            </div>
+            <label style="margin-top:10px;">Large (K)</label>
+            <input type="text" id="se_q19_large">
+
+            <label>20. Has market demand for coconut crab changed?</label>
+            <select id="se_q20_demandchange">
+              <option value="">Select…</option><option>Increased</option><option>Decreased</option><option>No change</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Step 6: Section F - Local Knowledge (Q21-26) -->
+        <div class="se-step" data-sewstep="7" style="display:none;">
+          <div class="card">
+            <div class="eyebrow">Step 7 of 10 — Section F</div>
+            <h2>Local Knowledge on Biology and Ecology</h2>
+
+            <label class="first">21. During which months do female coconut crabs carry eggs (spawn)?</label>
+            <div class="check-group month-grid" id="se_q21_spawnmonths">
+              <label class="check-opt"><input type="checkbox" value="Jan"> Jan</label>
+              <label class="check-opt"><input type="checkbox" value="Feb"> Feb</label>
+              <label class="check-opt"><input type="checkbox" value="Mar"> Mar</label>
+              <label class="check-opt"><input type="checkbox" value="Apr"> Apr</label>
+              <label class="check-opt"><input type="checkbox" value="May"> May</label>
+              <label class="check-opt"><input type="checkbox" value="Jun"> Jun</label>
+              <label class="check-opt"><input type="checkbox" value="Jul"> Jul</label>
+              <label class="check-opt"><input type="checkbox" value="Aug"> Aug</label>
+              <label class="check-opt"><input type="checkbox" value="Sep"> Sep</label>
+              <label class="check-opt"><input type="checkbox" value="Oct"> Oct</label>
+              <label class="check-opt"><input type="checkbox" value="Nov"> Nov</label>
+              <label class="check-opt"><input type="checkbox" value="Dec"> Dec</label>
+              <label class="check-opt"><input type="checkbox" value="Other"> Other</label>
+            </div>
+            <div id="se_q21_other_wrap" style="display:none;">
+              <label>Other, specify</label>
+              <input type="text" id="se_q21_other">
+            </div>
+
+            <label>22. During which months do coconut crabs usually molt (shed their shell)?</label>
+            <div class="check-group month-grid" id="se_q22_moltmonths">
+              <label class="check-opt"><input type="checkbox" value="Jan"> Jan</label>
+              <label class="check-opt"><input type="checkbox" value="Feb"> Feb</label>
+              <label class="check-opt"><input type="checkbox" value="Mar"> Mar</label>
+              <label class="check-opt"><input type="checkbox" value="Apr"> Apr</label>
+              <label class="check-opt"><input type="checkbox" value="May"> May</label>
+              <label class="check-opt"><input type="checkbox" value="Jun"> Jun</label>
+              <label class="check-opt"><input type="checkbox" value="Jul"> Jul</label>
+              <label class="check-opt"><input type="checkbox" value="Aug"> Aug</label>
+              <label class="check-opt"><input type="checkbox" value="Sep"> Sep</label>
+              <label class="check-opt"><input type="checkbox" value="Oct"> Oct</label>
+              <label class="check-opt"><input type="checkbox" value="Nov"> Nov</label>
+              <label class="check-opt"><input type="checkbox" value="Dec"> Dec</label>
+              <label class="check-opt"><input type="checkbox" value="Other"> Other</label>
+            </div>
+            <div id="se_q22_other_wrap" style="display:none;">
+              <label>Other, specify</label>
+              <input type="text" id="se_q22_other">
+            </div>
+
+            <label>23. During which period are large/mature coconut crabs most commonly observed in large numbers?</label>
+            <select id="se_q23_largeperiod">
+              <option value="">Select…</option><option>Wet season</option><option>Dry season</option><option>Specific months</option>
+            </select>
+            <div id="se_q23_specify_wrap" style="display:none;">
+              <label>Specify months</label>
+              <input type="text" id="se_q23_specify">
+            </div>
+
+            <label>24. During which period are small/juvenile coconut crabs most commonly observed in large numbers?</label>
+            <select id="se_q24_smallperiod">
+              <option value="">Select…</option><option>Wet season</option><option>Dry season</option><option>Specific months</option>
+            </select>
+            <div id="se_q24_specify_wrap" style="display:none;">
+              <label>Specify months</label>
+              <input type="text" id="se_q24_specify">
+            </div>
+
+            <label>25. Which habitats are coconut crabs most commonly found in?</label>
+            <div class="check-group" id="se_q25_habitats">
+              <label class="check-opt"><input type="checkbox" value="Forest"> Forest</label>
+              <label class="check-opt"><input type="checkbox" value="Coastal areas"> Coastal areas</label>
+              <label class="check-opt"><input type="checkbox" value="Karsts"> Karsts</label>
+              <label class="check-opt"><input type="checkbox" value="Burrows"> Burrows</label>
+              <label class="check-opt"><input type="checkbox" value="Coconut plantations"> Coconut plantations</label>
+              <label class="check-opt"><input type="checkbox" value="Other"> Other</label>
+            </div>
+            <div id="se_q25_other_wrap" style="display:none;">
+              <label>Other, specify</label>
+              <input type="text" id="se_q25_other">
+            </div>
+
+            <label>26. Are coconut crabs more active during</label>
+            <select id="se_q26_activetime">
+              <option value="">Select…</option><option>Day</option><option>Night</option><option>Both</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Step 7: Section G - Awareness, Management, Compliance (Q27-30) -->
+        <div class="se-step" data-sewstep="8" style="display:none;">
+          <div class="card">
+            <div class="eyebrow">Step 8 of 10 — Section G</div>
+            <h2>Awareness, Management, and Compliance</h2>
+
+            <label class="first">27. Are you aware of any rules or regulations on coconut crab harvesting?</label>
+            <select id="se_q27_awarerules">
+              <option value="">Select…</option><option>Yes</option><option>No</option>
+            </select>
+
+            <label>28. What management measures do you know of?</label>
+            <div class="check-group" id="se_q28_management">
+              <label class="check-opt"><input type="checkbox" value="Size limits"> Size limits</label>
+              <label class="check-opt"><input type="checkbox" value="Closed seasons"> Closed seasons</label>
+              <label class="check-opt"><input type="checkbox" value="Protected areas"> Protected areas</label>
+              <label class="check-opt"><input type="checkbox" value="Catch limit"> Catch limit</label>
+            </div>
+            <div id="se_q28_catchlimit_wrap" style="display:none;">
+              <label>Catch limit (specify)</label>
+              <input type="text" id="se_q28_catchlimit">
+            </div>
+
+            <label>29. Who sets these rules or regulations on coconut crab harvesting in the community?</label>
+            <div class="check-group" id="se_q29_setby">
+              <label class="check-opt"><input type="checkbox" value="Community leaders"> Community leaders</label>
+              <label class="check-opt"><input type="checkbox" value="Village Chief"> Village Chief</label>
+              <label class="check-opt"><input type="checkbox" value="NGO's"> NGO's</label>
+              <label class="check-opt"><input type="checkbox" value="LLG"> LLG</label>
+              <label class="check-opt"><input type="checkbox" value="Provincial Government"> Provincial Government</label>
+            </div>
+
+            <label>30. Would harvesting restrictions affect your livelihood?</label>
+            <select id="se_q30_restrictioneffect">
+              <option value="">Select…</option><option>Positively</option><option>Negatively</option><option>No effect</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Step 8: Section H - Perceptions and Future Outlook (Q31-33) -->
+        <div class="se-step" data-sewstep="9" style="display:none;">
+          <div class="card">
+            <div class="eyebrow">Step 9 of 10 — Section H</div>
+            <h2>Perceptions and Future Outlook</h2>
+
+            <label class="first">31. How would you describe the current coconut crab population (observations)?</label>
+            <select id="se_q31_population">
+              <option value="">Select…</option><option>High</option><option>Moderate</option><option>Low</option>
+            </select>
+
+            <label>32. What are the main threats to coconut crabs in your area?</label>
+            <div class="check-group" id="se_q32_threats">
+              <label class="check-opt"><input type="checkbox" value="Overharvesting"> Overharvesting</label>
+              <label class="check-opt"><input type="checkbox" value="Habitat loss"> Habitat loss</label>
+              <label class="check-opt"><input type="checkbox" value="Trade"> Trade</label>
+              <label class="check-opt"><input type="checkbox" value="Other"> Other</label>
+            </div>
+            <div id="se_q32_other_wrap" style="display:none;">
+              <label>Other, specify</label>
+              <input type="text" id="se_q32_other">
+            </div>
+
+            <label>33. What actions do you suggest for ensuring coconut crab availability for future generations?</label>
+            <textarea id="se_q33_actions"></textarea>
+          </div>
+        </div>
+
+        <!-- Step 9: Review -->
+        <div class="se-step" data-sewstep="10" style="display:none;">
+          <div class="card">
+            <div class="eyebrow">Step 10 of 10</div>
+            <h2>Review Survey</h2>
+            <p class="help">Check everything below, then submit. Submitted surveys are saved on this device and can be synced later.</p>
+          </div>
+          <div id="seReviewContent"></div>
+        </div>
+      </div>
+      <!-- /#socioWizard -->
+
+      <!-- ============ BIOLOGICAL SURVEY WIZARD ============ -->
+      <div id="bioWizard" style="display:none;">
+        <button class="module-back" type="button" id="bioBack">◀ Coconut Crab Survey</button>
+
+        <div id="bioProgress">
+          <div class="step active" data-biostep="1"><div class="bar"></div><div class="circ">1</div><div class="lbl">Surveyor</div></div>
+          <div class="step" data-biostep="2"><div class="bar"></div><div class="circ">2</div><div class="lbl">Bait Stations</div></div>
+          <div class="step" data-biostep="3"><div class="bar"></div><div class="circ">3</div><div class="lbl">Finish</div></div>
+          <div class="step" data-biostep="4"><div class="bar"></div><div class="circ">4</div><div class="lbl">Review</div></div>
+        </div>
+
+        <!-- Step 1: Section 1 - Surveyor Information -->
+        <div class="bio-step" data-biowstep="1">
+          <div class="card">
+            <div class="eyebrow">Step 1 of 4 — Section 1</div>
+            <h2>Surveyor Information</h2>
+
+            <label class="first">Start Time</label>
+            <input type="time" id="bio_startTime">
+
+            <label>Date of Survey</label>
+            <input type="date" id="bio_date">
+
+            <label>Surveyor 1</label>
+            <select id="bio_surveyor1">
+              <option value="">Select surveyor…</option>
+              <option>Olisasha Dandava</option><option>Nickson Palg</option><option>Nathan Tony</option>
+              <option>Joan Kumba</option><option>Jeremy Marisimba</option><option>Ronnis Nai</option>
+            </select>
+
+            <label>Surveyor 2</label>
+            <select id="bio_surveyor2">
+              <option value="">Select surveyor…</option>
+              <option>Olisasha Dandava</option><option>Nickson Palg</option><option>Nathan Tony</option>
+              <option>Joan Kumba</option><option>Jeremy Marisimba</option><option>Ronnis Nai</option>
+            </select>
+
+            <label>Province</label>
+            <select id="bio_province">
+              <option value="">Select province…</option>
+              <option>Milne Bay Province</option><option>Manus Province</option><option>New Ireland Province</option>
+              <option>Gulf Province</option><option>Central Province</option><option>Western Province</option>
+              <option>Autonomous Region of Bougainville (AROB)</option>
+            </select>
+
+            <label>LLG</label>
+            <input type="text" id="bio_llg" placeholder="e.g. Sumkar Rural LLG">
+
+            <label>Sampling Site</label>
+            <input type="text" id="bio_samplingSite" placeholder="e.g. Bogia lagoon">
+          </div>
+        </div>
+
+        <!-- Step 2: Section 2/3/4 - Bait Stations (repeatable, with nested crabs + weather) -->
+        <div class="bio-step" data-biowstep="2" style="display:none;">
+          <div class="card">
+            <div class="eyebrow">Step 2 of 4 — Sections 2–4</div>
+            <h2>Bait Station Information</h2>
+            <p class="help">Add one card per bait station. If crabs were found, record each one; weather conditions are captured once per bait station.</p>
+          </div>
+          <div id="baitList"></div>
+          <button id="addBaitBtn" type="button">+ Add bait station</button>
+        </div>
+
+        <!-- Step 3: Section 5 - Additional Information -->
+        <div class="bio-step" data-biowstep="3" style="display:none;">
+          <div class="card">
+            <div class="eyebrow">Step 3 of 4 — Section 5</div>
+            <h2>Additional Information</h2>
+
+            <label class="first">Comments</label>
+            <textarea id="bio_comments" placeholder="Weather, disturbances, anything unusual…"></textarea>
+
+            <label>GPS Location</label>
+            <button class="btn btn-secondary btn-block" id="bioGpsBtn" type="button">📍 Capture GPS location</button>
+            <div class="gps-readout" id="bioGpsReadout">Not captured yet</div>
+            <p class="help">One GPS reading is captured for the entire survey.</p>
+
+            <label>End Time</label>
+            <input type="time" id="bio_endTime">
+          </div>
+        </div>
+
+        <!-- Step 4: Review -->
+        <div class="bio-step" data-biowstep="4" style="display:none;">
+          <div class="card">
+            <div class="eyebrow">Step 4 of 4</div>
+            <h2>Review Survey</h2>
+            <p class="help">Check everything below, then submit. Submitted surveys are saved on this device and can be synced later.</p>
+          </div>
+          <div id="bioReviewContent"></div>
+        </div>
+      </div>
+      <!-- /#bioWizard -->
+
     </div>
     <div class="local-tab-content" data-localcontent="records">
-      <div class="empty"><p><strong>No coconut crab surveys yet.</strong></p></div>
+      <div class="eyebrow">Socio-economic Surveys</div>
+      <div class="stat-row">
+        <div class="stat"><div class="n" id="se_statTotal">0</div><div class="l">Submitted</div></div>
+        <div class="stat"><div class="n" id="se_statUnsynced">0</div><div class="l">Not synced</div></div>
+      </div>
+      <div id="se_recordsList"></div>
+
+      <div class="eyebrow" style="margin-top:24px;">Biological Surveys</div>
+      <div class="stat-row">
+        <div class="stat"><div class="n" id="bio_statTotal">0</div><div class="l">Submitted</div></div>
+        <div class="stat"><div class="n" id="bio_statCrabs">0</div><div class="l">Crabs logged</div></div>
+        <div class="stat"><div class="n" id="bio_statUnsynced">0</div><div class="l">Not synced</div></div>
+      </div>
+      <div id="bio_recordsList"></div>
     </div>
   </section>
 
@@ -458,6 +982,18 @@
   <button class="btn btn-primary" id="nextBtn" type="button">Next ▶</button>
 </div>
 
+<div id="seWizardNav" style="position:fixed; bottom:0; left:0; right:0; background:var(--paper); border-top:1px solid var(--line); padding:10px 14px; display:none; gap:8px; z-index:60;">
+  <button class="btn btn-secondary" id="sePrevBtn" type="button" style="flex:1; padding:14px 8px; font-size:0.85rem;">◀ Previous</button>
+  <button class="btn btn-ghost" id="seSaveDraftBtn" type="button" style="flex:1; padding:14px 8px; font-size:0.85rem;">Save Draft</button>
+  <button class="btn btn-primary" id="seNextBtn" type="button" style="flex:1; padding:14px 8px; font-size:0.85rem;">Next ▶</button>
+</div>
+
+<div id="bioWizardNav" style="position:fixed; bottom:0; left:0; right:0; background:var(--paper); border-top:1px solid var(--line); padding:10px 14px; display:none; gap:8px; z-index:60;">
+  <button class="btn btn-secondary" id="bioPrevBtn" type="button" style="flex:1; padding:14px 8px; font-size:0.85rem;">◀ Previous</button>
+  <button class="btn btn-ghost" id="bioSaveDraftBtn" type="button" style="flex:1; padding:14px 8px; font-size:0.85rem;">Save Draft</button>
+  <button class="btn btn-primary" id="bioNextBtn" type="button" style="flex:1; padding:14px 8px; font-size:0.85rem;">Next ▶</button>
+</div>
+
 <div class="modal-overlay" id="infoModal">
   <div class="modal-card">
     <h3>Information</h3>
@@ -502,6 +1038,7 @@ function showMainView(id){
   updateWizardNavVisibility();
   window.scrollTo(0,0);
   if(id === 'mudcrab'){ refreshRecords('mudcrab'); }
+  if(id === 'coconut'){ refreshRecords('socioeconomic'); refreshRecords('biological'); }
   if(id === 'sync'){ refreshSyncTab(); }
 }
 
@@ -577,6 +1114,7 @@ document.querySelectorAll('.local-tabs').forEach(tabsEl=>{
       parentSection.querySelector('.local-tab-content[data-localcontent="'+btn.dataset.localtab+'"]').classList.add('active');
       updateWizardNavVisibility();
       if(parentSection.id === 'view-mudcrab' && btn.dataset.localtab === 'records'){ refreshRecords('mudcrab'); }
+      if(parentSection.id === 'view-coconut' && btn.dataset.localtab === 'records'){ refreshRecords('socioeconomic'); refreshRecords('biological'); }
       window.scrollTo(0,0);
     });
   });
@@ -590,6 +1128,8 @@ function isMudcrabSurveyTabActive(){
 }
 function updateWizardNavVisibility(){
   document.getElementById('wizardNav').style.display = isMudcrabSurveyTabActive() ? 'flex' : 'none';
+  document.getElementById('seWizardNav').style.display = isSocioSurveyTabActive() ? 'flex' : 'none';
+  document.getElementById('bioWizardNav').style.display = isBioSurveyTabActive() ? 'flex' : 'none';
 }
 
 document.querySelectorAll('[data-openplaceholder]').forEach(el=>{
@@ -1131,6 +1671,56 @@ async function refreshRecords(type){
       if(confirm('Delete this survey permanently?')){ await idbDelete('surveys', el.dataset.delrec); refreshRecords('mudcrab'); refreshUnsyncedBadge(); }
     }); });
   }
+  if(type === 'socioeconomic'){
+    document.getElementById('se_statTotal').textContent = recs.length;
+    document.getElementById('se_statUnsynced').textContent = recs.filter(function(s){return !s.synced;}).length;
+    const wrap = document.getElementById('se_recordsList');
+    wrap.innerHTML = '';
+    if(recs.length === 0){
+      wrap.innerHTML = '<div class="empty"><p><strong>No coconut crab surveys yet.</strong></p><p>Surveys you submit will appear here, on this device, even with no signal.</p></div>';
+      return;
+    }
+    recs.forEach(function(rec){
+      const div = document.createElement('div');
+      div.className = 'record-card' + (rec.synced ? '' : ' unsynced');
+      div.innerHTML =
+        '<div class="record-top"><div><h3>'+escapeHtml(rec.resp_fullname || 'Untitled respondent')+'</h3></div>'+
+        '<span class="badge '+(rec.synced?'synced':'unsynced')+'">'+(rec.synced?'Synced':'Not synced')+'</span></div>'+
+        '<div class="record-meta">Socio-economic · '+(rec.date||'')+' · '+escapeHtml(rec.resp_village||'')+'<br>'+
+        'Surveyor: '+escapeHtml(rec.surveyor1||'—')+'</div>'+
+        '<div class="record-actions"><button class="btn-danger" type="button" data-delserec="'+rec.id+'">Delete</button></div>';
+      wrap.appendChild(div);
+    });
+    wrap.querySelectorAll('[data-delserec]').forEach(function(el){ el.addEventListener('click', async function(){
+      if(confirm('Delete this survey permanently?')){ await idbDelete('surveys', el.dataset.delserec); refreshRecords('socioeconomic'); refreshUnsyncedBadge(); }
+    }); });
+  }
+  if(type === 'biological'){
+    document.getElementById('bio_statTotal').textContent = recs.length;
+    document.getElementById('bio_statCrabs').textContent = recs.reduce(function(n,s){return n + s.baitStations.reduce(function(m,b){return m+b.crabs.length;},0);}, 0);
+    document.getElementById('bio_statUnsynced').textContent = recs.filter(function(s){return !s.synced;}).length;
+    const wrap = document.getElementById('bio_recordsList');
+    wrap.innerHTML = '';
+    if(recs.length === 0){
+      wrap.innerHTML = '<div class="empty"><p><strong>No biological surveys yet.</strong></p><p>Surveys you submit will appear here, on this device, even with no signal.</p></div>';
+      return;
+    }
+    recs.forEach(function(rec){
+      const crabCount = rec.baitStations.reduce(function(m,b){return m+b.crabs.length;},0);
+      const div = document.createElement('div');
+      div.className = 'record-card' + (rec.synced ? '' : ' unsynced');
+      div.innerHTML =
+        '<div class="record-top"><div><h3>'+escapeHtml(rec.samplingSite || 'Untitled site')+'</h3></div>'+
+        '<span class="badge '+(rec.synced?'synced':'unsynced')+'">'+(rec.synced?'Synced':'Not synced')+'</span></div>'+
+        '<div class="record-meta">Biological · '+(rec.date||'')+' '+(rec.startTime||'')+' · '+(rec.province||'')+(rec.llg?('· '+rec.llg):'')+'<br>'+
+        rec.baitStations.length+' bait station(s) · '+crabCount+' crab(s) · Surveyors: '+escapeHtml(rec.surveyor1||'—')+' &amp; '+escapeHtml(rec.surveyor2||'—')+'</div>'+
+        '<div class="record-actions"><button class="btn-danger" type="button" data-delbiorec="'+rec.id+'">Delete</button></div>';
+      wrap.appendChild(div);
+    });
+    wrap.querySelectorAll('[data-delbiorec]').forEach(function(el){ el.addEventListener('click', async function(){
+      if(confirm('Delete this survey permanently?')){ await idbDelete('surveys', el.dataset.delbiorec); refreshRecords('biological'); refreshUnsyncedBadge(); }
+    }); });
+  }
 }
 async function viewRecord(id){
   const all = await idbGetAll('surveys');
@@ -1151,28 +1741,89 @@ document.getElementById('exportJsonBtn').addEventListener('click', async functio
 });
 document.getElementById('exportCsvBtn').addEventListener('click', async function(){
   const all = await idbGetAll('surveys');
-  const headers = ['survey_type','survey_id','start_time','date','surveyor1','province','llg','sampling_site','tide_condition','comments','lat','lon','gps_accuracy_m','end_time','synced',
-    'quadrat_number','empty_burrows','crabs_found','crab_index','species','sex','berried','molted','carapace_width_mm','weight_g','gear_used','effort_minutes'];
-  const rows = [headers.join(',')];
-  all.forEach(function(rec){
-    const base = [rec.surveyType||'mudcrab', rec.id,rec.startTime,rec.date,rec.surveyor1,rec.province,rec.llg,rec.samplingSite,rec.tideCondition,rec.comments,
-      rec.gps?rec.gps.lat:'', rec.gps?rec.gps.lon:'', rec.gps?rec.gps.accuracy:'', rec.endTime, rec.synced];
-    if(!rec.quadrats || rec.quadrats.length === 0){
-      rows.push(base.concat(['','','','','','','','','','','','']).map(escapeCsv).join(','));
-    } else {
-      rec.quadrats.forEach(function(q, qi){
-        if(q.crabs.length === 0){
-          rows.push(base.concat([qi+1, q.emptyBurrows, q.crabsFound,'','','','','','','','','']).map(escapeCsv).join(','));
-        } else {
-          q.crabs.forEach(function(c,ci){
-            rows.push(base.concat([qi+1, q.emptyBurrows, q.crabsFound, ci+1, c.species, c.sex, c.berried, c.molted, c.carapaceWidth, c.weight, c.gearUsed, c.effort]).map(escapeCsv).join(','));
-          });
-        }
+  const mudcrabRecs = all.filter(function(r){ return (r.surveyType||'mudcrab') === 'mudcrab'; });
+  const seRecs = all.filter(function(r){ return r.surveyType === 'socioeconomic'; });
+  const bioRecs = all.filter(function(r){ return r.surveyType === 'biological'; });
+  let filesExported = 0;
+
+  if(mudcrabRecs.length > 0){
+    const headers = ['survey_id','start_time','date','surveyor1','province','llg','sampling_site','tide_condition','comments','lat','lon','gps_accuracy_m','end_time','synced',
+      'quadrat_number','empty_burrows','crabs_found','crab_index','species','sex','berried','molted','carapace_width_mm','weight_g','gear_used','effort_minutes'];
+    const rows = [headers.join(',')];
+    mudcrabRecs.forEach(function(rec){
+      const base = [rec.id,rec.startTime,rec.date,rec.surveyor1,rec.province,rec.llg,rec.samplingSite,rec.tideCondition,rec.comments,
+        rec.gps?rec.gps.lat:'', rec.gps?rec.gps.lon:'', rec.gps?rec.gps.accuracy:'', rec.endTime, rec.synced];
+      if(!rec.quadrats || rec.quadrats.length === 0){
+        rows.push(base.concat(['','','','','','','','','','','','']).map(escapeCsv).join(','));
+      } else {
+        rec.quadrats.forEach(function(q, qi){
+          if(q.crabs.length === 0){
+            rows.push(base.concat([qi+1, q.emptyBurrows, q.crabsFound,'','','','','','','','','']).map(escapeCsv).join(','));
+          } else {
+            q.crabs.forEach(function(c,ci){
+              rows.push(base.concat([qi+1, q.emptyBurrows, q.crabsFound, ci+1, c.species, c.sex, c.berried, c.molted, c.carapaceWidth, c.weight, c.gearUsed, c.effort]).map(escapeCsv).join(','));
+            });
+          }
+        });
+      }
+    });
+    downloadFile('kuka_mudcrab_surveys_'+Date.now()+'.csv', rows.join('\n'), 'text/csv');
+    filesExported++;
+  }
+
+  if(seRecs.length > 0){
+    const seHeaders = ['survey_id','date','surveyor1','site','synced',
+      'resp_fullname','resp_gender','resp_age','resp_marital','resp_province','resp_district','resp_llg','resp_village','resp_contact',
+      'q1_harvest','q2_purpose','q3_mainincome','q3_explain','q4_otherincome','q5_freq','q5_amount','q6_years','q7_incomechange',
+      'q8_consumefreq','q9_protein','q10_foodsupply','q10_explain',
+      'q11_days','q12_hours','q13_catchtrend','q14_sizechange','q15_methods','q15_other','q16_materials','q17_selective','q17_explain',
+      'q18_sellwhere','q18_other','q19_small','q19_medium','q19_large','q20_demandchange',
+      'q21_spawnmonths','q21_other','q22_moltmonths','q22_other','q23_largeperiod','q23_specify','q24_smallperiod','q24_specify','q25_habitats','q25_other','q26_activetime',
+      'q27_awarerules','q28_management','q28_catchlimit','q29_setby','q30_restrictioneffect',
+      'q31_population','q32_threats','q32_other','q33_actions'];
+    const seRows = [seHeaders.join(',')];
+    seRecs.forEach(function(rec){
+      const row = seHeaders.map(function(key){
+        if(key === 'survey_id') return rec.id;
+        if(key === 'synced') return rec.synced;
+        const v = rec[key];
+        if(Array.isArray(v)) return v.join('; ');
+        return v;
       });
-    }
-  });
-  downloadFile('kuka_surveys_'+Date.now()+'.csv', rows.join('\n'), 'text/csv');
-  toast('CSV exported');
+      seRows.push(row.map(escapeCsv).join(','));
+    });
+    downloadFile('kuka_socioeconomic_surveys_'+Date.now()+'.csv', seRows.join('\n'), 'text/csv');
+    filesExported++;
+  }
+
+  if(bioRecs.length > 0){
+    const bioHeaders = ['survey_id','start_time','date','surveyor1','surveyor2','province','llg','sampling_site','comments','lat','lon','gps_accuracy_m','end_time','synced',
+      'bait_number','crabs_found','weather_conditions','crab_index','cephalo_thoracic_length_mm','thoracic_length_mm','carapace_width_mm','weight_g','sex','berried','molted','habitat_type'];
+    const bioRows = [bioHeaders.join(',')];
+    bioRecs.forEach(function(rec){
+      const base = [rec.id,rec.startTime,rec.date,rec.surveyor1,rec.surveyor2,rec.province,rec.llg,rec.samplingSite,rec.comments,
+        rec.gps?rec.gps.lat:'', rec.gps?rec.gps.lon:'', rec.gps?rec.gps.accuracy:'', rec.endTime, rec.synced];
+      if(!rec.baitStations || rec.baitStations.length === 0){
+        bioRows.push(base.concat(['','','','','','','','','','','']).map(escapeCsv).join(','));
+      } else {
+        rec.baitStations.forEach(function(b){
+          const weatherStr = (b.weather||[]).join('; ');
+          if(!b.crabs || b.crabs.length === 0){
+            bioRows.push(base.concat([b.baitNumber, b.crabsFound, weatherStr, '','','','','','','','','']).map(escapeCsv).join(','));
+          } else {
+            b.crabs.forEach(function(c, ci){
+              bioRows.push(base.concat([b.baitNumber, b.crabsFound, weatherStr, ci+1, c.cephaloThoracicLength, c.thoracicLength, c.carapaceWidth, c.weight, c.sex, c.berried, c.molted, (c.habitat||[]).join('; ')]).map(escapeCsv).join(','));
+            });
+          }
+        });
+      }
+    });
+    downloadFile('kuka_biological_surveys_'+Date.now()+'.csv', bioRows.join('\n'), 'text/csv');
+    filesExported++;
+  }
+
+  if(filesExported === 0){ toast('No surveys to export yet.'); }
+  else { toast('CSV exported ('+filesExported+' file'+(filesExported>1?'s':'')+')'); }
 });
 
 async function refreshSyncTab(){
@@ -1197,22 +1848,37 @@ document.getElementById('syncBtn').addEventListener('click', async function(){
   let okCount=0, failCount=0;
   for(const rec of pending){
     try{
-      const row = {
-        id: rec.id, user_id: currentUser.id, survey_type: rec.surveyType || 'mudcrab',
-        surveyor1: rec.surveyor1, start_time: rec.startTime, survey_date: rec.date,
-        province: rec.province, llg: rec.llg, sampling_site: rec.samplingSite, tide_condition: rec.tideCondition,
-        quadrats: rec.quadrats, comments: rec.comments, gps: rec.gps, end_time: rec.endTime
-      };
+      const type = rec.surveyType || 'mudcrab';
+      let row;
+      let label;
+      if(type === 'mudcrab'){
+        row = {
+          id: rec.id, user_id: currentUser.id, survey_type: type,
+          surveyor1: rec.surveyor1, start_time: rec.startTime, survey_date: rec.date,
+          province: rec.province, llg: rec.llg, sampling_site: rec.samplingSite, tide_condition: rec.tideCondition,
+          quadrats: rec.quadrats, comments: rec.comments, gps: rec.gps, end_time: rec.endTime
+        };
+        label = rec.samplingSite;
+      } else {
+        row = {
+          id: rec.id, user_id: currentUser.id, survey_type: type,
+          surveyor1: rec.surveyor1, survey_date: rec.date, sampling_site: rec.site || rec.samplingSite,
+          data: rec
+        };
+        label = rec.site || rec.samplingSite;
+      }
       const result = await supabaseClient.from('surveys').upsert(row);
-      if(!result.error){ rec.synced = true; await idbPut('surveys', rec); okCount++; logSync('✓ Synced '+rec.samplingSite+' ('+rec.date+')'); }
-      else { failCount++; logSync('✗ Rejected '+rec.samplingSite+' — '+result.error.message); }
-    }catch(err){ failCount++; logSync('✗ Failed to send '+rec.samplingSite+' — '+err.message); }
+      if(!result.error){ rec.synced = true; await idbPut('surveys', rec); okCount++; logSync('✓ Synced '+label+' ('+rec.date+')'); }
+      else { failCount++; logSync('✗ Rejected '+label+' — '+result.error.message); }
+    }catch(err){ failCount++; logSync('✗ Failed to send — '+err.message); }
   }
   logSync('Done. '+okCount+' synced, '+failCount+' failed.');
   toast('Sync finished: '+okCount+' synced, '+failCount+' failed');
   refreshUnsyncedBadge();
   refreshSyncTab();
   refreshRecords('mudcrab');
+  refreshRecords('socioeconomic');
+  refreshRecords('biological');
 });
 
 async function loadSettings(){
@@ -1234,11 +1900,723 @@ document.getElementById('wipeBtn').addEventListener('click', async function(){
       await idbClear('drafts');
       draft = blankDraft(); quadCounter=0; crabCounter=0; capturedGps=null;
       pushDraftIntoForm();
+      seDraft = blankSeDraft();
+      pushSeDraftIntoForm();
+      bioDraft = blankBioDraft();
+      bioBaitCounter = 0; bioCrabCounter = 0; bioCapturedGps = null;
       toast('All local data deleted');
-      refreshRecords('mudcrab'); refreshUnsyncedBadge();
+      refreshRecords('mudcrab'); refreshRecords('socioeconomic'); refreshRecords('biological'); refreshUnsyncedBadge();
     }
   }
 });
+
+/* ================= Socio-economic survey (Coconut Crab) ================= */
+let seStep = 1;
+let seDraft = null;
+function blankSeDraft(){
+  return {
+    surveyor1:'', date:'', site:'',
+    resp_fullname:'', resp_gender:'', resp_age:'', resp_marital:'', resp_province:'',
+    resp_district:'', resp_llg:'', resp_village:'', resp_contact:'',
+    q1_harvest:'', q2_purpose:[], q3_mainincome:'', q3_explain:'', q4_otherincome:'',
+    q5_freq:'', q5_amount:'', q6_years:'', q7_incomechange:'',
+    q8_consumefreq:'', q9_protein:'', q10_foodsupply:'', q10_explain:'',
+    q11_days:'', q12_hours:'', q13_catchtrend:'', q14_sizechange:'',
+    q15_methods:[], q15_other:'', q16_materials:'', q17_selective:'', q17_explain:'',
+    q18_sellwhere:[], q18_other:'', q19_small:'', q19_medium:'', q19_large:'', q20_demandchange:'',
+    q21_spawnmonths:[], q21_other:'', q22_moltmonths:[], q22_other:'',
+    q23_largeperiod:'', q23_specify:'', q24_smallperiod:'', q24_specify:'',
+    q25_habitats:[], q25_other:'', q26_activetime:'',
+    q27_awarerules:'', q28_management:[], q28_catchlimit:'', q29_setby:[], q30_restrictioneffect:'',
+    q31_population:'', q32_threats:[], q32_other:'', q33_actions:''
+  };
+}
+function getCheckGroupValues(containerId){
+  const box = document.getElementById(containerId);
+  return Array.from(box.querySelectorAll('input[type=checkbox]:checked')).map(function(el){return el.value;});
+}
+function setCheckGroupValues(containerId, arr){
+  const box = document.getElementById(containerId);
+  arr = arr || [];
+  box.querySelectorAll('input[type=checkbox]').forEach(function(el){ el.checked = arr.indexOf(el.value) !== -1; });
+}
+
+document.getElementById('openSocioeconomic').addEventListener('click', async function(){
+  const saved = await idbGet('drafts','socioeconomic_current');
+  seDraft = (saved && saved.value) ? saved.value : blankSeDraft();
+  if(!seDraft.date) seDraft.date = new Date().toISOString().slice(0,10);
+  if(!seDraft.surveyor1) seDraft.surveyor1 = settings.surveyor || '';
+  pushSeDraftIntoForm();
+  document.getElementById('coconutList').style.display = 'none';
+  document.getElementById('coconutPlaceholder').style.display = 'none';
+  document.getElementById('socioWizard').style.display = 'block';
+  seGoToStep(1);
+  updateWizardNavVisibility();
+});
+document.getElementById('socioBack').addEventListener('click', function(){
+  pullAllSeFields();
+  autosaveSeDraft();
+  document.getElementById('socioWizard').style.display = 'none';
+  document.getElementById('coconutList').style.display = 'block';
+  updateWizardNavVisibility();
+});
+
+function pullAllSeFields(){
+  if(!seDraft) return;
+  seDraft.surveyor1 = document.getElementById('se_surveyor1').value;
+  seDraft.date = document.getElementById('se_date').value;
+  seDraft.site = document.getElementById('se_site').value;
+
+  seDraft.resp_fullname = document.getElementById('se_resp_fullname').value;
+  seDraft.resp_gender = document.getElementById('se_resp_gender').value;
+  seDraft.resp_age = document.getElementById('se_resp_age').value;
+  seDraft.resp_marital = document.getElementById('se_resp_marital').value;
+  seDraft.resp_province = document.getElementById('se_resp_province').value;
+  seDraft.resp_district = document.getElementById('se_resp_district').value;
+  seDraft.resp_llg = document.getElementById('se_resp_llg').value;
+  seDraft.resp_village = document.getElementById('se_resp_village').value;
+  seDraft.resp_contact = document.getElementById('se_resp_contact').value;
+
+  seDraft.q1_harvest = document.getElementById('se_q1_harvest').value;
+  seDraft.q2_purpose = getCheckGroupValues('se_q2_purpose');
+  seDraft.q3_mainincome = document.getElementById('se_q3_mainincome').value;
+  seDraft.q3_explain = document.getElementById('se_q3_explain').value;
+  seDraft.q4_otherincome = document.getElementById('se_q4_otherincome').value;
+  seDraft.q5_freq = document.getElementById('se_q5_freq').value;
+  seDraft.q5_amount = document.getElementById('se_q5_amount').value;
+  seDraft.q6_years = document.getElementById('se_q6_years').value;
+  seDraft.q7_incomechange = document.getElementById('se_q7_incomechange').value;
+
+  seDraft.q8_consumefreq = document.getElementById('se_q8_consumefreq').value;
+  seDraft.q9_protein = document.getElementById('se_q9_protein').value;
+  seDraft.q10_foodsupply = document.getElementById('se_q10_foodsupply').value;
+  seDraft.q10_explain = document.getElementById('se_q10_explain').value;
+
+  seDraft.q11_days = document.getElementById('se_q11_days').value;
+  seDraft.q12_hours = document.getElementById('se_q12_hours').value;
+  seDraft.q13_catchtrend = document.getElementById('se_q13_catchtrend').value;
+  seDraft.q14_sizechange = document.getElementById('se_q14_sizechange').value;
+  seDraft.q15_methods = getCheckGroupValues('se_q15_methods');
+  seDraft.q15_other = document.getElementById('se_q15_other').value;
+  seDraft.q16_materials = document.getElementById('se_q16_materials').value;
+  seDraft.q17_selective = document.getElementById('se_q17_selective').value;
+  seDraft.q17_explain = document.getElementById('se_q17_explain').value;
+
+  seDraft.q18_sellwhere = getCheckGroupValues('se_q18_sellwhere');
+  seDraft.q18_other = document.getElementById('se_q18_other').value;
+  seDraft.q19_small = document.getElementById('se_q19_small').value;
+  seDraft.q19_medium = document.getElementById('se_q19_medium').value;
+  seDraft.q19_large = document.getElementById('se_q19_large').value;
+  seDraft.q20_demandchange = document.getElementById('se_q20_demandchange').value;
+
+  seDraft.q21_spawnmonths = getCheckGroupValues('se_q21_spawnmonths');
+  seDraft.q21_other = document.getElementById('se_q21_other').value;
+  seDraft.q22_moltmonths = getCheckGroupValues('se_q22_moltmonths');
+  seDraft.q22_other = document.getElementById('se_q22_other').value;
+  seDraft.q23_largeperiod = document.getElementById('se_q23_largeperiod').value;
+  seDraft.q23_specify = document.getElementById('se_q23_specify').value;
+  seDraft.q24_smallperiod = document.getElementById('se_q24_smallperiod').value;
+  seDraft.q24_specify = document.getElementById('se_q24_specify').value;
+  seDraft.q25_habitats = getCheckGroupValues('se_q25_habitats');
+  seDraft.q25_other = document.getElementById('se_q25_other').value;
+  seDraft.q26_activetime = document.getElementById('se_q26_activetime').value;
+
+  seDraft.q27_awarerules = document.getElementById('se_q27_awarerules').value;
+  seDraft.q28_management = getCheckGroupValues('se_q28_management');
+  seDraft.q28_catchlimit = document.getElementById('se_q28_catchlimit').value;
+  seDraft.q29_setby = getCheckGroupValues('se_q29_setby');
+  seDraft.q30_restrictioneffect = document.getElementById('se_q30_restrictioneffect').value;
+
+  seDraft.q31_population = document.getElementById('se_q31_population').value;
+  seDraft.q32_threats = getCheckGroupValues('se_q32_threats');
+  seDraft.q32_other = document.getElementById('se_q32_other').value;
+  seDraft.q33_actions = document.getElementById('se_q33_actions').value;
+}
+function pushSeDraftIntoForm(){
+  document.getElementById('se_surveyor1').value = seDraft.surveyor1 || '';
+  document.getElementById('se_date').value = seDraft.date || '';
+  document.getElementById('se_site').value = seDraft.site || '';
+
+  document.getElementById('se_resp_fullname').value = seDraft.resp_fullname || '';
+  document.getElementById('se_resp_gender').value = seDraft.resp_gender || '';
+  document.getElementById('se_resp_age').value = seDraft.resp_age || '';
+  document.getElementById('se_resp_marital').value = seDraft.resp_marital || '';
+  document.getElementById('se_resp_province').value = seDraft.resp_province || '';
+  document.getElementById('se_resp_district').value = seDraft.resp_district || '';
+  document.getElementById('se_resp_llg').value = seDraft.resp_llg || '';
+  document.getElementById('se_resp_village').value = seDraft.resp_village || '';
+  document.getElementById('se_resp_contact').value = seDraft.resp_contact || '';
+
+  document.getElementById('se_q1_harvest').value = seDraft.q1_harvest || '';
+  setCheckGroupValues('se_q2_purpose', seDraft.q2_purpose);
+  document.getElementById('se_q3_mainincome').value = seDraft.q3_mainincome || '';
+  document.getElementById('se_q3_explain').value = seDraft.q3_explain || '';
+  document.getElementById('se_q4_otherincome').value = seDraft.q4_otherincome || '';
+  document.getElementById('se_q5_freq').value = seDraft.q5_freq || '';
+  document.getElementById('se_q5_amount').value = seDraft.q5_amount || '';
+  document.getElementById('se_q6_years').value = seDraft.q6_years || '';
+  document.getElementById('se_q7_incomechange').value = seDraft.q7_incomechange || '';
+
+  document.getElementById('se_q8_consumefreq').value = seDraft.q8_consumefreq || '';
+  document.getElementById('se_q9_protein').value = seDraft.q9_protein || '';
+  document.getElementById('se_q10_foodsupply').value = seDraft.q10_foodsupply || '';
+  document.getElementById('se_q10_explain').value = seDraft.q10_explain || '';
+
+  document.getElementById('se_q11_days').value = seDraft.q11_days || '';
+  document.getElementById('se_q12_hours').value = seDraft.q12_hours || '';
+  document.getElementById('se_q13_catchtrend').value = seDraft.q13_catchtrend || '';
+  document.getElementById('se_q14_sizechange').value = seDraft.q14_sizechange || '';
+  setCheckGroupValues('se_q15_methods', seDraft.q15_methods);
+  document.getElementById('se_q15_other').value = seDraft.q15_other || '';
+  document.getElementById('se_q16_materials').value = seDraft.q16_materials || '';
+  document.getElementById('se_q17_selective').value = seDraft.q17_selective || '';
+  document.getElementById('se_q17_explain').value = seDraft.q17_explain || '';
+
+  setCheckGroupValues('se_q18_sellwhere', seDraft.q18_sellwhere);
+  document.getElementById('se_q18_other').value = seDraft.q18_other || '';
+  document.getElementById('se_q19_small').value = seDraft.q19_small || '';
+  document.getElementById('se_q19_medium').value = seDraft.q19_medium || '';
+  document.getElementById('se_q19_large').value = seDraft.q19_large || '';
+  document.getElementById('se_q20_demandchange').value = seDraft.q20_demandchange || '';
+
+  setCheckGroupValues('se_q21_spawnmonths', seDraft.q21_spawnmonths);
+  document.getElementById('se_q21_other').value = seDraft.q21_other || '';
+  setCheckGroupValues('se_q22_moltmonths', seDraft.q22_moltmonths);
+  document.getElementById('se_q22_other').value = seDraft.q22_other || '';
+  document.getElementById('se_q23_largeperiod').value = seDraft.q23_largeperiod || '';
+  document.getElementById('se_q23_specify').value = seDraft.q23_specify || '';
+  document.getElementById('se_q24_smallperiod').value = seDraft.q24_smallperiod || '';
+  document.getElementById('se_q24_specify').value = seDraft.q24_specify || '';
+  setCheckGroupValues('se_q25_habitats', seDraft.q25_habitats);
+  document.getElementById('se_q25_other').value = seDraft.q25_other || '';
+  document.getElementById('se_q26_activetime').value = seDraft.q26_activetime || '';
+
+  document.getElementById('se_q27_awarerules').value = seDraft.q27_awarerules || '';
+  setCheckGroupValues('se_q28_management', seDraft.q28_management);
+  document.getElementById('se_q28_catchlimit').value = seDraft.q28_catchlimit || '';
+  setCheckGroupValues('se_q29_setby', seDraft.q29_setby);
+  document.getElementById('se_q30_restrictioneffect').value = seDraft.q30_restrictioneffect || '';
+
+  document.getElementById('se_q31_population').value = seDraft.q31_population || '';
+  setCheckGroupValues('se_q32_threats', seDraft.q32_threats);
+  document.getElementById('se_q32_other').value = seDraft.q32_other || '';
+  document.getElementById('se_q33_actions').value = seDraft.q33_actions || '';
+
+  updateSeConditionals();
+}
+function updateSeConditionals(){
+  document.getElementById('se_q3_explain_wrap').style.display = (document.getElementById('se_q3_mainincome').value === 'No') ? 'block' : 'none';
+  document.getElementById('se_q10_explain_wrap').style.display = (document.getElementById('se_q10_foodsupply').value === 'Yes') ? 'block' : 'none';
+  document.getElementById('se_q15_other_wrap').style.display = (getCheckGroupValues('se_q15_methods').indexOf('Other') !== -1) ? 'block' : 'none';
+  document.getElementById('se_q17_explain_wrap').style.display = (document.getElementById('se_q17_selective').value === 'Yes') ? 'block' : 'none';
+  document.getElementById('se_q18_other_wrap').style.display = (getCheckGroupValues('se_q18_sellwhere').indexOf('Other') !== -1) ? 'block' : 'none';
+  document.getElementById('se_q21_other_wrap').style.display = (getCheckGroupValues('se_q21_spawnmonths').indexOf('Other') !== -1) ? 'block' : 'none';
+  document.getElementById('se_q22_other_wrap').style.display = (getCheckGroupValues('se_q22_moltmonths').indexOf('Other') !== -1) ? 'block' : 'none';
+  document.getElementById('se_q23_specify_wrap').style.display = (document.getElementById('se_q23_largeperiod').value === 'Specific months') ? 'block' : 'none';
+  document.getElementById('se_q24_specify_wrap').style.display = (document.getElementById('se_q24_smallperiod').value === 'Specific months') ? 'block' : 'none';
+  document.getElementById('se_q25_other_wrap').style.display = (getCheckGroupValues('se_q25_habitats').indexOf('Other') !== -1) ? 'block' : 'none';
+  document.getElementById('se_q28_catchlimit_wrap').style.display = (getCheckGroupValues('se_q28_management').indexOf('Catch limit') !== -1) ? 'block' : 'none';
+  document.getElementById('se_q32_other_wrap').style.display = (getCheckGroupValues('se_q32_threats').indexOf('Other') !== -1) ? 'block' : 'none';
+}
+document.getElementById('socioWizard').addEventListener('input', function(e){
+  updateSeConditionals();
+  autosaveSeDraft();
+});
+document.getElementById('socioWizard').addEventListener('change', function(e){
+  updateSeConditionals();
+  autosaveSeDraft();
+});
+
+let seAutosaveTimer = null;
+function autosaveSeDraft(){
+  pullAllSeFields();
+  clearTimeout(seAutosaveTimer);
+  seAutosaveTimer = setTimeout(async function(){
+    await idbPut('drafts', { key:'socioeconomic_current', value: seDraft, savedAt: new Date().toISOString() });
+  }, 400);
+}
+
+function isSocioSurveyTabActive(){
+  const section = document.getElementById('view-coconut');
+  if(!section.classList.contains('active')) return false;
+  const activeLocalBtn = section.querySelector('.local-tabs button.active');
+  if(!activeLocalBtn || activeLocalBtn.dataset.localtab !== 'survey') return false;
+  return document.getElementById('socioWizard').style.display !== 'none';
+}
+
+function seGoToStep(n){
+  seStep = n;
+  document.querySelectorAll('.se-step').forEach(function(el){
+    el.style.display = (parseInt(el.dataset.sewstep) === n) ? 'block' : 'none';
+  });
+  document.querySelectorAll('#seProgress .step').forEach(function(el){
+    const s = parseInt(el.dataset.sestep);
+    el.classList.toggle('active', s === n);
+    el.classList.toggle('done', s < n);
+  });
+  document.getElementById('sePrevBtn').style.visibility = (n===1) ? 'hidden' : 'visible';
+  const nextBtn = document.getElementById('seNextBtn');
+  nextBtn.textContent = (n === 10) ? 'Submit Survey ✔' : 'Next ▶';
+  if(n === 10){ pullAllSeFields(); renderSeReview(); }
+  window.scrollTo(0,0);
+  updateWizardNavVisibility();
+}
+document.getElementById('sePrevBtn').addEventListener('click', function(){ if(seStep>1){ pullAllSeFields(); autosaveSeDraft(); seGoToStep(seStep-1); } });
+document.getElementById('seNextBtn').addEventListener('click', async function(){
+  pullAllSeFields();
+  if(seStep === 1){
+    if(!seDraft.surveyor1.trim() || !seDraft.site.trim()){ toast('Please fill in Surveyor 1 and Village/Site.'); return; }
+  }
+  if(seStep === 10){ await submitSeSurvey(); return; }
+  autosaveSeDraft();
+  seGoToStep(seStep+1);
+});
+document.getElementById('seSaveDraftBtn').addEventListener('click', function(){
+  pullAllSeFields();
+  autosaveSeDraft();
+  toast('Draft saved');
+});
+
+function seReviewLine(label, value){
+  return '<div class="review-line"><span class="k">'+label+'</span><span class="v">'+(escapeHtml(value)||'—')+'</span></div>';
+}
+function renderSeReview(){
+  const el = document.getElementById('seReviewContent');
+  let html = '';
+  html += '<div class="card review-block"><h3>Surveyor Information</h3>'+
+    seReviewLine('Surveyor 1', seDraft.surveyor1)+seReviewLine('Date', seDraft.date)+seReviewLine('Contact Details', seDraft.site)+'</div>';
+
+  html += '<div class="card review-block"><h3>Section A — Respondent Information</h3>'+
+    seReviewLine('Full Name', seDraft.resp_fullname)+
+    seReviewLine('Gender', seDraft.resp_gender)+
+    seReviewLine('Age', seDraft.resp_age)+
+    seReviewLine('Marital Status', seDraft.resp_marital)+
+    seReviewLine('Province', seDraft.resp_province)+
+    seReviewLine('District', seDraft.resp_district)+
+    seReviewLine('LLG', seDraft.resp_llg)+
+    seReviewLine('Village', seDraft.resp_village)+
+    seReviewLine('Contact Details', seDraft.resp_contact)+'</div>';
+
+  html += '<div class="card review-block"><h3>Livelihood and Income</h3>'+
+    seReviewLine('1. Harvest coconut crabs?', seDraft.q1_harvest)+
+    seReviewLine('2. Purpose', seDraft.q2_purpose.join(', '))+
+    seReviewLine('3. Main income source?', seDraft.q3_mainincome)+
+    (seDraft.q3_mainincome==='No' ? seReviewLine('If No, explain', seDraft.q3_explain) : '')+
+    seReviewLine('4. Other income activities', seDraft.q4_otherincome)+
+    seReviewLine('5. Avg income', (seDraft.q5_freq||'')+' '+(seDraft.q5_amount?('K '+seDraft.q5_amount):''))+
+    seReviewLine('6. Years harvesting', seDraft.q6_years)+
+    seReviewLine('7. Income change (5yr)', seDraft.q7_incomechange)+'</div>';
+
+  html += '<div class="card review-block"><h3>Food Security and Household Use</h3>'+
+    seReviewLine('8. Consumption frequency', seDraft.q8_consumefreq)+
+    seReviewLine('9. Important protein source?', seDraft.q9_protein)+
+    seReviewLine('10. Availability affected food supply?', seDraft.q10_foodsupply)+
+    (seDraft.q10_foodsupply==='Yes' ? seReviewLine('If Yes, explain', seDraft.q10_explain) : '')+'</div>';
+
+  html += '<div class="card review-block"><h3>Harvesting Effort and Practices</h3>'+
+    seReviewLine('11. Days per week', seDraft.q11_days)+
+    seReviewLine('12. Hours per trip', seDraft.q12_hours)+
+    seReviewLine('13. Catching trend', seDraft.q13_catchtrend)+
+    seReviewLine('14. Size change observed', seDraft.q14_sizechange)+
+    seReviewLine('15. Methods', seDraft.q15_methods.join(', '))+
+    (seDraft.q15_methods.indexOf('Other')!==-1 ? seReviewLine('Other, specify', seDraft.q15_other) : '')+
+    seReviewLine('16. Materials used', seDraft.q16_materials)+
+    seReviewLine('17. Selective harvest?', seDraft.q17_selective)+
+    (seDraft.q17_selective==='Yes' ? seReviewLine('If Yes, explain', seDraft.q17_explain) : '')+'</div>';
+
+  html += '<div class="card review-block"><h3>Market and Trade</h3>'+
+    seReviewLine('18. Sell locations', seDraft.q18_sellwhere.join(', '))+
+    (seDraft.q18_sellwhere.indexOf('Other')!==-1 ? seReviewLine('Other, specify', seDraft.q18_other) : '')+
+    seReviewLine('19. Price (Small/Medium/Large)', 'K'+(seDraft.q19_small||'?')+' / K'+(seDraft.q19_medium||'?')+' / K'+(seDraft.q19_large||'?'))+
+    seReviewLine('20. Demand change', seDraft.q20_demandchange)+'</div>';
+
+  html += '<div class="card review-block"><h3>Local Knowledge — Biology and Ecology</h3>'+
+    seReviewLine('21. Spawning months', seDraft.q21_spawnmonths.join(', '))+
+    (seDraft.q21_spawnmonths.indexOf('Other')!==-1 ? seReviewLine('Other, specify', seDraft.q21_other) : '')+
+    seReviewLine('22. Molting months', seDraft.q22_moltmonths.join(', '))+
+    (seDraft.q22_moltmonths.indexOf('Other')!==-1 ? seReviewLine('Other, specify', seDraft.q22_other) : '')+
+    seReviewLine('23. Large/mature crabs period', seDraft.q23_largeperiod)+
+    (seDraft.q23_largeperiod==='Specific months' ? seReviewLine('Specify', seDraft.q23_specify) : '')+
+    seReviewLine('24. Small/juvenile crabs period', seDraft.q24_smallperiod)+
+    (seDraft.q24_smallperiod==='Specific months' ? seReviewLine('Specify', seDraft.q24_specify) : '')+
+    seReviewLine('25. Habitats', seDraft.q25_habitats.join(', '))+
+    (seDraft.q25_habitats.indexOf('Other')!==-1 ? seReviewLine('Other, specify', seDraft.q25_other) : '')+
+    seReviewLine('26. Active during', seDraft.q26_activetime)+'</div>';
+
+  html += '<div class="card review-block"><h3>Awareness, Management, and Compliance</h3>'+
+    seReviewLine('27. Aware of rules?', seDraft.q27_awarerules)+
+    seReviewLine('28. Management measures known', seDraft.q28_management.join(', '))+
+    (seDraft.q28_management.indexOf('Catch limit')!==-1 ? seReviewLine('Catch limit', seDraft.q28_catchlimit) : '')+
+    seReviewLine('29. Set by', seDraft.q29_setby.join(', '))+
+    seReviewLine('30. Restrictions effect', seDraft.q30_restrictioneffect)+'</div>';
+
+  html += '<div class="card review-block"><h3>Perceptions and Future Outlook</h3>'+
+    seReviewLine('31. Current population', seDraft.q31_population)+
+    seReviewLine('32. Main threats', seDraft.q32_threats.join(', '))+
+    (seDraft.q32_threats.indexOf('Other')!==-1 ? seReviewLine('Other, specify', seDraft.q32_other) : '')+
+    seReviewLine('33. Suggested actions', seDraft.q33_actions)+'</div>';
+
+  el.innerHTML = html;
+}
+
+async function submitSeSurvey(){
+  pullAllSeFields();
+  if(!seDraft.surveyor1.trim() || !seDraft.site.trim()){
+    toast('Missing required info — check Survey Info (Step 1).');
+    seGoToStep(1);
+    return;
+  }
+  const record = Object.assign({}, seDraft, { id: uid('se'), surveyType:'socioeconomic', synced:false, savedAt: new Date().toISOString() });
+  await idbPut('surveys', record);
+  await idbDelete('drafts', 'socioeconomic_current');
+  toast('Survey submitted and saved locally ✔');
+  seDraft = blankSeDraft();
+  document.getElementById('socioWizard').style.display = 'none';
+  document.getElementById('coconutList').style.display = 'block';
+  updateWizardNavVisibility();
+  refreshUnsyncedBadge();
+}
+
+/* ================= Biological Survey (Coconut Crab) ================= */
+let bioStep = 1;
+let bioDraft = null;
+let bioBaitCounter = 0;
+let bioCrabCounter = 0;
+let bioCapturedGps = null;
+function blankBioDraft(){
+  return {
+    startTime:'', date:'', surveyor1:'', surveyor2:'', province:'', llg:'', samplingSite:'',
+    baitStations: [], comments:'', gps:null, endTime:''
+  };
+}
+
+document.getElementById('openBiological').addEventListener('click', async function(){
+  const saved = await idbGet('drafts','biological_current');
+  bioDraft = (saved && saved.value) ? saved.value : blankBioDraft();
+  bioBaitCounter = 0; bioCrabCounter = 0;
+  bioDraft.baitStations.forEach(function(b){ bioBaitCounter++; b.crabs.forEach(function(){bioCrabCounter++;}); });
+  if(!bioDraft.date) bioDraft.date = new Date().toISOString().slice(0,10);
+  if(!bioDraft.startTime) bioDraft.startTime = new Date().toTimeString().slice(0,5);
+  if(!bioDraft.surveyor1) bioDraft.surveyor1 = settings.surveyor || '';
+  pushBioDraftIntoForm();
+  document.getElementById('coconutList').style.display = 'none';
+  document.getElementById('coconutPlaceholder').style.display = 'none';
+  document.getElementById('bioWizard').style.display = 'block';
+  bioGoToStep(1);
+  updateWizardNavVisibility();
+});
+document.getElementById('bioBack').addEventListener('click', function(){
+  pullBioFormIntoDraft();
+  autosaveBioDraft();
+  document.getElementById('bioWizard').style.display = 'none';
+  document.getElementById('coconutList').style.display = 'block';
+  updateWizardNavVisibility();
+});
+
+function pullBioFormIntoDraft(){
+  if(!bioDraft) return;
+  if(bioStep === 1){
+    bioDraft.startTime = document.getElementById('bio_startTime').value;
+    bioDraft.date = document.getElementById('bio_date').value;
+    bioDraft.surveyor1 = document.getElementById('bio_surveyor1').value;
+    bioDraft.surveyor2 = document.getElementById('bio_surveyor2').value;
+    bioDraft.province = document.getElementById('bio_province').value;
+    bioDraft.llg = document.getElementById('bio_llg').value;
+    bioDraft.samplingSite = document.getElementById('bio_samplingSite').value;
+  }
+  if(bioStep === 3){
+    bioDraft.comments = document.getElementById('bio_comments').value;
+    bioDraft.endTime = document.getElementById('bio_endTime').value;
+    bioDraft.gps = bioCapturedGps;
+  }
+}
+function pushBioDraftIntoForm(){
+  document.getElementById('bio_startTime').value = bioDraft.startTime || '';
+  document.getElementById('bio_date').value = bioDraft.date || '';
+  document.getElementById('bio_surveyor1').value = bioDraft.surveyor1 || '';
+  document.getElementById('bio_surveyor2').value = bioDraft.surveyor2 || '';
+  document.getElementById('bio_province').value = bioDraft.province || '';
+  document.getElementById('bio_llg').value = bioDraft.llg || '';
+  document.getElementById('bio_samplingSite').value = bioDraft.samplingSite || '';
+  document.getElementById('bio_comments').value = bioDraft.comments || '';
+  document.getElementById('bio_endTime').value = bioDraft.endTime || '';
+  bioCapturedGps = bioDraft.gps || null;
+  document.getElementById('bioGpsReadout').textContent = bioCapturedGps
+    ? ('Lat ' + bioCapturedGps.lat.toFixed(5) + ', Lon ' + bioCapturedGps.lon.toFixed(5) + ' (±' + Math.round(bioCapturedGps.accuracy) + 'm)')
+    : 'Not captured yet';
+  renderBaitList();
+}
+
+let bioAutosaveTimer = null;
+function autosaveBioDraft(showToast){
+  pullBioFormIntoDraft();
+  clearTimeout(bioAutosaveTimer);
+  bioAutosaveTimer = setTimeout(async function(){
+    await idbPut('drafts', { key:'biological_current', value: bioDraft, savedAt: new Date().toISOString() });
+    if(showToast) toast('Draft saved');
+  }, showToast ? 0 : 400);
+}
+document.getElementById('bioWizard').addEventListener('input', function(){ autosaveBioDraft(false); });
+document.getElementById('bioWizard').addEventListener('change', function(){ autosaveBioDraft(false); });
+
+document.getElementById('bioGpsBtn').addEventListener('click', function(){
+  const readout = document.getElementById('bioGpsReadout');
+  if(!navigator.geolocation){ readout.textContent = 'GPS not supported on this device/browser.'; return; }
+  readout.textContent = 'Capturing…';
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      bioCapturedGps = { lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy };
+      readout.textContent = 'Lat ' + bioCapturedGps.lat.toFixed(5) + ', Lon ' + bioCapturedGps.lon.toFixed(5) + ' (±' + Math.round(bioCapturedGps.accuracy) + 'm)';
+      autosaveBioDraft(false);
+    },
+    function(err){ readout.textContent = 'Could not get location (' + err.message + ').'; },
+    { enableHighAccuracy:true, timeout:15000 }
+  );
+});
+
+/* ---- Bait Station repeat group (mirrors Quadrat pattern) ---- */
+function addBaitStation(){
+  const b = { id:'bait'+(bioBaitCounter++), baitNumber: bioDraft.baitStations.length+1, crabsFound:'no', crabs: [], weather:[], open:true };
+  bioDraft.baitStations.forEach(function(bb){bb.open=false;});
+  bioDraft.baitStations.push(b);
+  renderBaitList();
+  autosaveBioDraft(false);
+}
+function removeBaitStation(id){
+  bioDraft.baitStations = bioDraft.baitStations.filter(function(b){return b.id!==id;});
+  renderBaitList();
+  autosaveBioDraft(false);
+}
+function toggleBaitStation(id){
+  bioDraft.baitStations.forEach(function(b){ b.open = (b.id===id) ? !b.open : b.open; });
+  renderBaitList();
+}
+function addBioCrab(baitId){
+  const b = bioDraft.baitStations.find(function(x){return x.id===baitId;});
+  if(!b) return;
+  b.crabs.push({ id:'bc'+(bioCrabCounter++), cephaloThoracicLength:'', thoracicLength:'', carapaceWidth:'', weight:'', sex:'Male', berried:'No', molted:'No', habitat:[] });
+  renderBaitList();
+  autosaveBioDraft(false);
+}
+function removeBioCrab(baitId, crabId){
+  const b = bioDraft.baitStations.find(function(x){return x.id===baitId;});
+  if(!b) return;
+  b.crabs = b.crabs.filter(function(c){return c.id!==crabId;});
+  renderBaitList();
+  autosaveBioDraft(false);
+}
+const HABITAT_OPTIONS = ['Cultivated Area','Dense Forest Floor','Sparse Forest Floor','Cliff','Rocky Area','Cave','Limestone Forest','Coconut Plantation'];
+const WEATHER_OPTIONS = ['Windy','Slightly Windy','Light Showers','Heavy Downpour','Normal Night'];
+
+function renderBaitList(){
+  const wrap = document.getElementById('baitList');
+  wrap.innerHTML = '';
+  bioDraft.baitStations.forEach(function(b, bi){
+    const card = document.createElement('div');
+    card.className = 'quad-card' + (b.open ? ' open' : '');
+    card.innerHTML =
+      '<div class="quad-head" data-btoggle="'+b.id+'">'+
+        '<div><div class="ttl">Bait Station '+(bi+1)+'</div>'+
+        '<div class="sub">Crabs found: '+(b.crabsFound==='yes'?'Yes ('+b.crabs.length+')':'No')+'</div></div>'+
+        '<div class="chev">⌄</div></div>'+
+      '<div class="quad-body">'+
+        '<label class="first">Bait Number</label>'+
+        '<input type="text" data-bfield="baitNumber" data-bid="'+b.id+'" value="'+escapeHtml(b.baitNumber)+'">'+
+        '<label>Were any Coconut Crabs found?</label>'+
+        '<select data-bfield="crabsFound" data-bid="'+b.id+'">'+
+          '<option value="no" '+(b.crabsFound==='no'?'selected':'')+'>No</option>'+
+          '<option value="yes" '+(b.crabsFound==='yes'?'selected':'')+'>Yes</option>'+
+        '</select>'+
+        (b.crabsFound==='yes' ? (
+          '<div class="nested-label">Coconut Crab Biological Data — Bait Station '+(bi+1)+'</div>'+
+          '<div class="crabs-wrap">'+ b.crabs.map(function(c,ci){return renderBioCrabEntry(b.id, c, ci);}).join('') +'</div>'+
+          '<button class="add-crab-btn" type="button" data-baddcrab="'+b.id+'">+ Add coconut crab record</button>'
+        ) : '') +
+        '<div class="nested-label">Environmental Conditions</div>'+
+        '<label class="first">Weather Conditions (tick all that apply)</label>'+
+        '<div class="check-group" data-weathergroup="'+b.id+'">'+
+          WEATHER_OPTIONS.map(function(w){ return '<label class="check-opt"><input type="checkbox" data-bweather="'+b.id+'" value="'+w+'" '+(b.weather.indexOf(w)!==-1?'checked':'')+'> '+w+'</label>'; }).join('') +
+        '</div>'+
+        '<div class="quad-body-actions"><button class="btn-danger" type="button" data-delbait="'+b.id+'">Delete bait station</button></div>'+
+      '</div>';
+    wrap.appendChild(card);
+  });
+  if(bioDraft.baitStations.length === 0){
+    wrap.innerHTML = '<div class="empty"><p><strong>No bait stations yet.</strong></p><p>Tap "Add bait station" below to start recording.</p></div>';
+  }
+  wrap.querySelectorAll('[data-btoggle]').forEach(function(el){ el.addEventListener('click', function(){toggleBaitStation(el.dataset.btoggle);}); });
+  wrap.querySelectorAll('[data-delbait]').forEach(function(el){ el.addEventListener('click', function(e){ e.stopPropagation(); if(confirm('Delete this bait station and all its crab records?')) removeBaitStation(el.dataset.delbait); }); });
+  wrap.querySelectorAll('[data-baddcrab]').forEach(function(el){ el.addEventListener('click', function(e){ e.stopPropagation(); addBioCrab(el.dataset.baddcrab); }); });
+  wrap.querySelectorAll('[data-bfield]').forEach(function(el){
+    el.addEventListener('click', function(e){e.stopPropagation();});
+    el.addEventListener('input', function(e){
+      const b = bioDraft.baitStations.find(function(x){return x.id===e.target.dataset.bid;});
+      if(!b) return;
+      const field = e.target.dataset.bfield;
+      b[field] = e.target.value;
+      if(field === 'crabsFound'){ renderBaitList(); }
+      else {
+        const head = wrap.querySelector('.quad-head[data-btoggle="'+b.id+'"] .sub');
+        if(head) head.textContent = 'Crabs found: '+(b.crabsFound==='yes'?'Yes ('+b.crabs.length+')':'No');
+      }
+      autosaveBioDraft(false);
+    });
+  });
+  wrap.querySelectorAll('[data-bweather]').forEach(function(el){
+    el.addEventListener('click', function(e){e.stopPropagation();});
+    el.addEventListener('change', function(e){
+      const b = bioDraft.baitStations.find(function(x){return x.id===e.target.dataset.bweather;});
+      if(!b) return;
+      b.weather = Array.from(wrap.querySelectorAll('[data-bweather="'+b.id+'"]:checked')).map(function(cb){return cb.value;});
+      autosaveBioDraft(false);
+    });
+  });
+  wrap.querySelectorAll('[data-cfield2]').forEach(function(el){
+    el.addEventListener('click', function(e){e.stopPropagation();});
+    el.addEventListener('input', function(e){
+      const b = bioDraft.baitStations.find(function(x){return x.id===e.target.dataset.bid2;});
+      if(!b) return;
+      const c = b.crabs.find(function(x){return x.id===e.target.dataset.cid2;});
+      if(!c) return;
+      const field = e.target.dataset.cfield2;
+      c[field] = e.target.value;
+      if(field === 'sex'){ renderBaitList(); }
+      autosaveBioDraft(false);
+    });
+  });
+  wrap.querySelectorAll('[data-chabitat]').forEach(function(el){
+    el.addEventListener('click', function(e){e.stopPropagation();});
+    el.addEventListener('change', function(e){
+      const b = bioDraft.baitStations.find(function(x){return x.id===e.target.dataset.bid2;});
+      if(!b) return;
+      const c = b.crabs.find(function(x){return x.id===e.target.dataset.cid2;});
+      if(!c) return;
+      c.habitat = Array.from(wrap.querySelectorAll('[data-chabitat][data-bid2="'+b.id+'"][data-cid2="'+c.id+'"]:checked')).map(function(cb){return cb.value;});
+      autosaveBioDraft(false);
+    });
+  });
+  wrap.querySelectorAll('[data-delbcrab]').forEach(function(el){ el.addEventListener('click', function(e){ e.stopPropagation(); removeBioCrab(el.dataset.bid2, el.dataset.delbcrab); }); });
+}
+function renderBioCrabEntry(baitId, c, idx){
+  return '<div class="crab-entry">'+
+    '<span class="idx">Crab '+(idx+1)+'</span>'+
+    '<button class="remove" type="button" data-bid2="'+baitId+'" data-delbcrab="'+c.id+'" title="Remove">✕</button>'+
+    '<div class="row2"><div><label class="first">Cephalo Thoracic Length (mm)</label>'+
+      '<input type="number" min="0" step="0.1" data-cfield2="cephaloThoracicLength" data-bid2="'+baitId+'" data-cid2="'+c.id+'" value="'+c.cephaloThoracicLength+'"></div>'+
+      '<div><label class="first">Thoracic Length (mm)</label>'+
+      '<input type="number" min="0" step="0.1" data-cfield2="thoracicLength" data-bid2="'+baitId+'" data-cid2="'+c.id+'" value="'+c.thoracicLength+'"></div></div>'+
+    '<div class="row2"><div><label>Carapace Width (mm)</label>'+
+      '<input type="number" min="0" step="0.1" data-cfield2="carapaceWidth" data-bid2="'+baitId+'" data-cid2="'+c.id+'" value="'+c.carapaceWidth+'"></div>'+
+      '<div><label>Weight (g)</label>'+
+      '<input type="number" min="0" step="1" data-cfield2="weight" data-bid2="'+baitId+'" data-cid2="'+c.id+'" value="'+c.weight+'"></div></div>'+
+    '<label>Sex</label><select data-cfield2="sex" data-bid2="'+baitId+'" data-cid2="'+c.id+'">'+
+      ['Male','Female'].map(function(s){return '<option '+(c.sex===s?'selected':'')+'>'+s+'</option>';}).join('') +
+    '</select>'+
+    (c.sex === 'Female' ? (
+      '<label>Berried?</label><select data-cfield2="berried" data-bid2="'+baitId+'" data-cid2="'+c.id+'">'+
+        ['No','Yes'].map(function(s){return '<option '+(c.berried===s?'selected':'')+'>'+s+'</option>';}).join('') +
+      '</select>'
+    ) : '') +
+    '<label>Molted?</label><select data-cfield2="molted" data-bid2="'+baitId+'" data-cid2="'+c.id+'">'+
+      ['No','Yes'].map(function(s){return '<option '+(c.molted===s?'selected':'')+'>'+s+'</option>';}).join('') +
+    '</select>'+
+    '<label>Habitat Type (tick all that apply)</label>'+
+    '<div class="check-group">'+
+      HABITAT_OPTIONS.map(function(h){ return '<label class="check-opt"><input type="checkbox" data-chabitat data-bid2="'+baitId+'" data-cid2="'+c.id+'" value="'+h+'" '+(c.habitat.indexOf(h)!==-1?'checked':'')+'> '+h+'</label>'; }).join('') +
+    '</div>'+
+  '</div>';
+}
+document.getElementById('addBaitBtn').addEventListener('click', addBaitStation);
+
+function isBioSurveyTabActive(){
+  const section = document.getElementById('view-coconut');
+  if(!section.classList.contains('active')) return false;
+  const activeLocalBtn = section.querySelector('.local-tabs button.active');
+  if(!activeLocalBtn || activeLocalBtn.dataset.localtab !== 'survey') return false;
+  return document.getElementById('bioWizard').style.display !== 'none';
+}
+
+function bioGoToStep(n){
+  bioStep = n;
+  document.querySelectorAll('.bio-step').forEach(function(el){
+    el.style.display = (parseInt(el.dataset.biowstep) === n) ? 'block' : 'none';
+  });
+  document.querySelectorAll('#bioProgress .step').forEach(function(el){
+    const s = parseInt(el.dataset.biostep);
+    el.classList.toggle('active', s === n);
+    el.classList.toggle('done', s < n);
+  });
+  document.getElementById('bioPrevBtn').style.visibility = (n===1) ? 'hidden' : 'visible';
+  const nextBtn = document.getElementById('bioNextBtn');
+  nextBtn.textContent = (n === 4) ? 'Submit Survey ✔' : 'Next ▶';
+  if(n === 4){ pullBioFormIntoDraft(); renderBioReview(); }
+  window.scrollTo(0,0);
+  updateWizardNavVisibility();
+}
+document.getElementById('bioPrevBtn').addEventListener('click', function(){ if(bioStep>1){ pullBioFormIntoDraft(); autosaveBioDraft(); bioGoToStep(bioStep-1); } });
+document.getElementById('bioNextBtn').addEventListener('click', async function(){
+  pullBioFormIntoDraft();
+  if(bioStep === 1){
+    if(!bioDraft.surveyor1.trim() || !bioDraft.surveyor2.trim()){ toast('Please select both Surveyor 1 and Surveyor 2.'); return; }
+    if(bioDraft.surveyor1 === bioDraft.surveyor2){ toast('Surveyor 2 cannot be the same person as Surveyor 1.'); return; }
+    if(!bioDraft.province || !bioDraft.llg.trim() || !bioDraft.samplingSite.trim()){ toast('Please fill in Province, LLG, and Sampling Site.'); return; }
+  }
+  if(bioStep === 2 && bioDraft.baitStations.length === 0){
+    if(!confirm('No bait stations added yet — continue anyway?')) return;
+  }
+  if(bioStep === 4){ await submitBioSurvey(); return; }
+  autosaveBioDraft();
+  bioGoToStep(bioStep+1);
+});
+document.getElementById('bioSaveDraftBtn').addEventListener('click', function(){
+  pullBioFormIntoDraft();
+  autosaveBioDraft(true);
+});
+
+function renderBioReview(){
+  const el = document.getElementById('bioReviewContent');
+  const totalCrabs = bioDraft.baitStations.reduce(function(n,b){return n+b.crabs.length;},0);
+  let html = '<div class="card review-block"><h3>Surveyor Information</h3>'+
+    seReviewLine('Start Time', bioDraft.startTime)+seReviewLine('Date', bioDraft.date)+
+    seReviewLine('Surveyor 1', bioDraft.surveyor1)+seReviewLine('Surveyor 2', bioDraft.surveyor2)+
+    seReviewLine('Province', bioDraft.province)+seReviewLine('LLG', bioDraft.llg)+seReviewLine('Sampling Site', bioDraft.samplingSite)+'</div>';
+
+  html += '<div class="card review-block"><h3>Bait Stations ('+bioDraft.baitStations.length+', '+totalCrabs+' crab'+(totalCrabs===1?'':'s')+')</h3>'+
+    (bioDraft.baitStations.length===0 ? '<p class="help">No bait stations recorded.</p>' : bioDraft.baitStations.map(function(b,bi){
+      return '<div class="review-quad"><div class="q-ttl">Bait Station '+(bi+1)+' — Bait #'+(b.baitNumber||'?')+' — Crabs found: '+(b.crabsFound==='yes'?'Yes':'No')+'</div>'+
+        b.crabs.map(function(c,ci){
+          return '<div class="review-crab">Crab '+(ci+1)+': '+c.sex+(c.sex==='Female'?', berried: '+c.berried:'')+', molted: '+c.molted+
+            ', CTL '+(c.cephaloThoracicLength||'?')+'mm, TL '+(c.thoracicLength||'?')+'mm, CW '+(c.carapaceWidth||'?')+'mm, '+(c.weight||'?')+'g, habitat: '+(c.habitat.join(', ')||'—')+'</div>';
+        }).join('') +
+        '<div class="review-crab">Weather: '+(b.weather.join(', ')||'—')+'</div></div>';
+    }).join('')) + '</div>';
+
+  html += '<div class="card review-block"><h3>Additional Information</h3>'+
+    seReviewLine('Comments', bioDraft.comments)+
+    seReviewLine('GPS', bioDraft.gps ? (bioDraft.gps.lat.toFixed(5)+', '+bioDraft.gps.lon.toFixed(5)+' (±'+Math.round(bioDraft.gps.accuracy)+'m)') : '')+
+    seReviewLine('End Time', bioDraft.endTime)+'</div>';
+
+  el.innerHTML = html;
+}
+
+async function submitBioSurvey(){
+  pullBioFormIntoDraft();
+  if(!bioDraft.surveyor1.trim() || !bioDraft.surveyor2.trim() || !bioDraft.samplingSite.trim()){
+    toast('Missing required info — check Surveyor Information (Step 1).');
+    bioGoToStep(1);
+    return;
+  }
+  const record = Object.assign({}, bioDraft, { id: uid('bio'), surveyType:'biological', synced:false, savedAt: new Date().toISOString() });
+  await idbPut('surveys', record);
+  await idbDelete('drafts', 'biological_current');
+  toast('Survey submitted and saved locally ✔');
+  bioDraft = blankBioDraft();
+  bioBaitCounter = 0; bioCrabCounter = 0; bioCapturedGps = null;
+  document.getElementById('bioWizard').style.display = 'none';
+  document.getElementById('coconutList').style.display = 'block';
+  updateWizardNavVisibility();
+  refreshUnsyncedBadge();
+}
 
 (async function init(){
   const isInviteFlow = await checkForInviteLink();
