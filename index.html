@@ -946,6 +946,13 @@
       <button class="btn btn-secondary btn-block" id="saveSettingsBtn" type="button" style="margin-top:14px;">Save settings</button>
     </div>
     <div class="card">
+      <div class="eyebrow">App Updates</div>
+      <h2>Version &amp; Sync</h2>
+      <p class="help" id="appVersionLabel">Checking version…</p>
+      <button class="btn btn-secondary btn-block" id="checkUpdateBtn" type="button" style="margin-top:10px;">Check for Updates</button>
+      <p class="help" id="updateStatusLabel"></p>
+    </div>
+    <div class="card">
       <div class="eyebrow">Danger zone</div>
       <h2>Reset</h2>
       <p class="help">Permanently deletes every submitted survey and the current draft on this device. Export a backup first.</p>
@@ -1022,6 +1029,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const APP_VERSION = "2026.07.22-1";
 const SUPABASE_URL = "https://spwdpzcuyrwjdhvluadu.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwd2RwemN1eXJ3amRodmx1YWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5OTQyOTYsImV4cCI6MjA5NjU3MDI5Nn0.xoI33qTtwT0SMxY_uJGQ0xSWE1o3Q0UgifguMyjvso8";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -2658,13 +2666,59 @@ async function submitBioSurvey(){
   else { showMainView('home'); }
 })();
 
+let swRegistration = null;
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('./sw.js').catch(function(err){
+    navigator.serviceWorker.register('./sw.js').then(function(reg){
+      swRegistration = reg;
+    }).catch(function(err){
       console.warn('Service worker registration failed:', err);
     });
   });
+  // When a new service worker takes control, the page has fresh code — reload to use it.
+  let hasReloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function(){
+    if(hasReloaded) return;
+    hasReloaded = true;
+    window.location.reload();
+  });
 }
+
+document.getElementById('appVersionLabel').textContent = 'App version: ' + APP_VERSION;
+
+document.getElementById('checkUpdateBtn').addEventListener('click', async function(){
+  const statusEl = document.getElementById('updateStatusLabel');
+  const btn = document.getElementById('checkUpdateBtn');
+  if(!('serviceWorker' in navigator)){
+    statusEl.textContent = 'Updates are not supported in this browser.';
+    return;
+  }
+  if(!navigator.onLine){
+    statusEl.textContent = 'You need an internet connection to check for updates.';
+    return;
+  }
+  btn.disabled = true;
+  statusEl.textContent = 'Checking for updates…';
+  try{
+    let reg = swRegistration || await navigator.serviceWorker.getRegistration();
+    if(!reg){
+      statusEl.textContent = 'Could not check — try closing and reopening the app.';
+      btn.disabled = false;
+      return;
+    }
+    await reg.update();
+    // Give the browser a moment to install/activate a new worker if one was found.
+    setTimeout(function(){
+      if(document.getElementById('updateStatusLabel').textContent === 'Checking for updates…'){
+        statusEl.textContent = "You're on the latest version.";
+      }
+      btn.disabled = false;
+    }, 2500);
+  } catch(err){
+    statusEl.textContent = 'Could not check for updates. Please try again later.';
+    btn.disabled = false;
+  }
+});
 </script>
 </body>
 </html>
