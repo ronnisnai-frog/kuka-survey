@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kuka-shell-v1';
+const CACHE_NAME = 'kuka-shell-v2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -20,6 +20,12 @@ self.addEventListener('install', (event) => {
       );
     }).then(() => self.skipWaiting())
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('activate', (event) => {
