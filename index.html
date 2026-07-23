@@ -235,6 +235,8 @@
   <button class="side-menu-item" data-nav="home"><span class="ic">🏠</span><span>Home</span></button>
   <button class="side-menu-item" data-nav="sync"><span class="ic">☁️</span><span>Synchronization</span></button>
   <button class="side-menu-item" data-nav="settings"><span class="ic">⚙️</span><span>Settings</span></button>
+  <button class="side-menu-item" data-nav="help"><span class="ic">❓</span><span>Help</span></button>
+  <button class="side-menu-item" data-nav="about"><span class="ic">ℹ️</span><span>About</span></button>
   <button class="side-menu-item" id="sideMenuAuthBtn"><span class="ic">🔒</span><span id="sideMenuAuthLabel">Login</span></button>
 </nav>
 
@@ -962,6 +964,91 @@
     </div>
   </section>
 
+  <section class="mainview" id="view-help">
+    <div class="eyebrow">Support</div>
+    <h2 style="margin-bottom:14px;">Help</h2>
+
+    <div class="card">
+      <h3>Getting Started</h3>
+      <p class="help">KUKA works fully offline — you don't need internet to fill out or submit a survey. You only need a connection to log in the first time, and to sync your data once you're back in range.</p>
+      <p class="help" style="margin-top:10px;"><strong>To record a survey:</strong></p>
+      <p class="help">1. Tap Home and choose a survey type (Mud Crab Survey or Coconut Crab Survey)<br>
+      2. Fill in each section, tapping Next to move forward<br>
+      3. Tap Submit Survey on the final Review step — your data is saved to this device immediately, even with no signal</p>
+    </div>
+
+    <div class="card">
+      <h3>Saving Your Work</h3>
+      <p class="help">Tap Save Draft at any point to save your progress without submitting. If you close the app partway through a survey, KUKA will ask if you want to resume your draft next time you open it. Submitted surveys stay safely on your device until you sync them — nothing is lost by being offline.</p>
+    </div>
+
+    <div class="card">
+      <h3>Syncing Your Data</h3>
+      <p class="help">Once you're back in network range:<br>
+      1. Open the side menu and tap Synchronization<br>
+      2. Tap Sync now to upload all unsynced surveys to your account<br>
+      3. You can also Export as CSV or JSON at any time — this works fully offline and gives you a backup file you can transfer manually</p>
+    </div>
+
+    <div class="card">
+      <h3>Your Account</h3>
+      <p class="help">New users request access from the login screen; access is approved by your KUKA administrator. Once logged in, you'll stay logged in — even offline — until you tap Logout yourself. Your name and account details appear under Settings.</p>
+    </div>
+
+    <div class="card">
+      <h3>Records</h3>
+      <p class="help">Each survey type keeps its own Records tab, showing everything you've submitted on this device, whether it's synced yet or not.</p>
+    </div>
+
+    <div class="card">
+      <h3>Keeping the App Updated</h3>
+      <p class="help">Go to Settings → Check for Updates to make sure you're using the latest version of KUKA. This requires an internet connection.</p>
+    </div>
+
+    <div class="card">
+      <h3>Troubleshooting</h3>
+      <p class="help"><strong>App won't sync:</strong> Confirm you're online and logged in, then try again — already-synced records are automatically skipped, so it's always safe to retry.</p>
+      <p class="help" style="margin-top:8px;"><strong>Lost signal mid-survey:</strong> No problem — just keep working. Nothing needs a connection until you sync.</p>
+      <p class="help" style="margin-top:8px;"><strong>Accidentally deleted something:</strong> Deletions are permanent, so always export a backup from Synchronization before using Delete all local data in Settings.</p>
+    </div>
+
+    <div class="card">
+      <h3>Need More Help?</h3>
+      <p class="help">Contact your KUKA administrator or data manager for account access issues, questions about survey methodology, or anything not covered here.</p>
+    </div>
+  </section>
+
+  <section class="mainview" id="view-about">
+    <div class="eyebrow">Support</div>
+    <h2 style="margin-bottom:14px;">About</h2>
+
+    <div class="card" style="text-align:center; padding:28px 20px;">
+      <div style="font-size:2.2rem; margin-bottom:6px;">🦀</div>
+      <h2 style="margin-bottom:2px;">KUKA</h2>
+      <p class="help" id="aboutVersionLabel">Version —</p>
+    </div>
+
+    <div class="card">
+      <h3>Purpose</h3>
+      <p class="help">KUKA is a fisheries survey platform built for Papua New Guinea, designed to help surveyors collect Mud Crab and Coconut Crab data — including biological measurements and socio-economic information — quickly and reliably in the field.</p>
+    </div>
+
+    <div class="card">
+      <h3>Built for the Field</h3>
+      <p class="help">KUKA works fully offline, so surveyors can record complete surveys in remote coastal and island communities with no signal. Data stays safely on the device and syncs automatically once back in network range.</p>
+    </div>
+
+    <div class="card">
+      <h3>Data &amp; Access</h3>
+      <p class="help">Survey data is stored securely and is only accessible to approved surveyors and administrators. New users are granted access by a KUKA administrator.</p>
+    </div>
+
+    <div class="card">
+      <h3>Support</h3>
+      <p class="help">For questions about accessing KUKA, survey methodology, or reporting an issue, contact your KUKA administrator or data manager.</p>
+    </div>
+  </section>
+
   <section class="mainview" id="view-login">
     <div class="loginCard">
       <h1>🦀 KUKA</h1>
@@ -1031,7 +1118,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const APP_VERSION = "2.0.0";
+const APP_VERSION = "2.2.0";
 const SUPABASE_URL = "https://spwdpzcuyrwjdhvluadu.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwd2RwemN1eXJ3amRodmx1YWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5OTQyOTYsImV4cCI6MjA5NjU3MDI5Nn0.xoI33qTtwT0SMxY_uJGQ0xSWE1o3Q0UgifguMyjvso8";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -2688,6 +2775,7 @@ if('serviceWorker' in navigator){
 
 document.getElementById('appVersionLabel').textContent = 'App version: v' + APP_VERSION;
 document.getElementById('sideMenuVersion').textContent = 'v' + APP_VERSION;
+document.getElementById('aboutVersionLabel').textContent = 'Version ' + APP_VERSION;
 
 document.getElementById('checkUpdateBtn').addEventListener('click', async function(){
   const statusEl = document.getElementById('updateStatusLabel');
