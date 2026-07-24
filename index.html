@@ -42,6 +42,9 @@
   }
   #topbar .icon-btn{ background:none; border:none; color:var(--sand); font-size:1.3rem; padding:6px 10px; cursor:pointer; line-height:1; }
   #topbar .topbar-title{ font-family:Georgia,serif; font-size:1.1rem; font-weight:700; }
+  .home-hero{ margin-bottom:22px; }
+  .home-hero h1{ font-size:2rem; color:var(--mangrove-dark); margin-bottom:2px; }
+  .home-hero p{ font-style:italic; color:var(--tide); font-size:0.95rem; margin:0; font-family:Georgia,serif; }
 
   #statusbar{
     position:sticky; top:48px; z-index:60; display:flex; align-items:center; justify-content:space-between;
@@ -168,6 +171,8 @@
   .badge{ font-size:0.65rem; font-weight:700; padding:3px 8px; border-radius:10px; text-transform:uppercase; letter-spacing:0.3px; flex:none; white-space:nowrap; }
   .badge.synced{ background:#DCEAE0; color:var(--mangrove-mid); }
   .badge.unsynced{ background:#F5DFC8; color:var(--shell-dim); }
+  .badge.draft{ background:#E7E1F2; color:#5B4A8A; }
+  .record-card.draftcard{ border-left-color:#7A64B8; }
   .record-meta{ font-size:0.82rem; color:#5B6259; margin-top:4px; line-height:1.5; }
   .record-actions{ margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
 
@@ -242,7 +247,7 @@
 
 <header id="topbar">
   <button class="icon-btn" id="hamburgerBtn" aria-label="Menu">☰</button>
-  <div class="topbar-title">🦀 KUKA</div>
+  <div class="topbar-title" id="topbarTitle">Home</div>
   <button class="icon-btn" id="homeBtn" aria-label="Home">🏠</button>
 </header>
 
@@ -254,6 +259,10 @@
 <main>
 
   <section class="mainview active" id="view-home">
+    <div class="home-hero">
+      <h1>🦀 KUKA</h1>
+      <p>A Fisheries Survey App</p>
+    </div>
     <div class="eyebrow">Fisheries Survey</div>
     <h2 style="margin-bottom:14px;">Choose a survey module</h2>
     <div class="module-card" data-openmodule="mudcrab">
@@ -353,6 +362,7 @@
 
     <div class="local-tab-content" data-localcontent="records">
       <div class="stat-row">
+        <div class="stat"><div class="n" id="mc_statDrafts">0</div><div class="l">Drafts</div></div>
         <div class="stat"><div class="n" id="mc_statTotal">0</div><div class="l">Submitted</div></div>
         <div class="stat"><div class="n" id="mc_statCrabs">0</div><div class="l">Crabs logged</div></div>
         <div class="stat"><div class="n" id="mc_statUnsynced">0</div><div class="l">Not synced</div></div>
@@ -898,6 +908,7 @@
     <div class="local-tab-content" data-localcontent="records">
       <div class="eyebrow">Socio-economic Surveys</div>
       <div class="stat-row">
+        <div class="stat"><div class="n" id="se_statDrafts">0</div><div class="l">Drafts</div></div>
         <div class="stat"><div class="n" id="se_statTotal">0</div><div class="l">Submitted</div></div>
         <div class="stat"><div class="n" id="se_statUnsynced">0</div><div class="l">Not synced</div></div>
       </div>
@@ -905,6 +916,7 @@
 
       <div class="eyebrow" style="margin-top:24px;">Biological Surveys</div>
       <div class="stat-row">
+        <div class="stat"><div class="n" id="bio_statDrafts">0</div><div class="l">Drafts</div></div>
         <div class="stat"><div class="n" id="bio_statTotal">0</div><div class="l">Submitted</div></div>
         <div class="stat"><div class="n" id="bio_statCrabs">0</div><div class="l">Crabs logged</div></div>
         <div class="stat"><div class="n" id="bio_statUnsynced">0</div><div class="l">Not synced</div></div>
@@ -940,12 +952,36 @@
       <div id="signedInBox" style="margin-top:8px;"><span id="userEmailLabel">—</span></div>
     </div>
     <div class="card">
-      <label class="first">Default Surveyor 1</label>
+      <label class="first">Default Surveyor</label>
       <select id="s_surveyor">
         <option value="">No default</option>
         <option>Olisasha Dandava</option><option>Nickson Palg</option><option>Nathan Tony</option>
         <option>Joan Kumba</option><option>Jeremy Marisimba</option><option>Ronnis Nai</option>
       </select>
+
+      <label>Language</label>
+      <select id="s_language">
+        <option value="en" selected>English</option>
+        <option value="es">Spanish</option>
+        <option value="fr">French</option>
+        <option value="pt">Portuguese</option>
+        <option value="de">German</option>
+        <option value="ar">Arabic</option>
+        <option value="zh">Chinese (Simplified)</option>
+        <option value="hi">Hindi</option>
+        <option value="ru">Russian</option>
+        <option value="ja">Japanese</option>
+      </select>
+
+      <label>Measurement Protocol</label>
+      <select id="s_measurementProtocol">
+        <option value="cm_kg">cm / Kg</option>
+        <option value="cm_g">cm / g</option>
+        <option value="mm_kg">mm / Kg</option>
+        <option value="mm_g">mm / g</option>
+      </select>
+      <p class="help">cm/mm apply to lengths and widths; Kg/g apply to specimen weight.</p>
+
       <p class="help">Surveys sync directly to your KUKA account when you tap "Sync now" in the Synchronization menu.</p>
       <button class="btn btn-secondary btn-block" id="saveSettingsBtn" type="button" style="margin-top:14px;">Save settings</button>
     </div>
@@ -979,7 +1015,7 @@
 
     <div class="card">
       <h3>Saving Your Work</h3>
-      <p class="help">Tap Save Draft at any point to save your progress without submitting. If you close the app partway through a survey, KUKA will ask if you want to resume your draft next time you open it. Submitted surveys stay safely on your device until you sync them — nothing is lost by being offline.</p>
+      <p class="help">Tap Save Draft at any point to save your progress without submitting. Drafts appear in that survey's Records tab, badged "Draft," with a Continue button so you can pick up exactly where you left off — even after closing the app. Your work also autosaves in the background as you type. Submitted surveys stay safely on your device until you sync them — nothing is lost by being offline.</p>
     </div>
 
     <div class="card">
@@ -1118,7 +1154,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const APP_VERSION = "2.2.0";
+const APP_VERSION = "3.0.0";
 const SUPABASE_URL = "https://spwdpzcuyrwjdhvluadu.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwd2RwemN1eXJ3amRodmx1YWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5OTQyOTYsImV4cCI6MjA5NjU3MDI5Nn0.xoI33qTtwT0SMxY_uJGQ0xSWE1o3Q0UgifguMyjvso8";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -1128,9 +1164,14 @@ let currentUser = null;
 let awaitingPasswordSet = false;
 let pendingModalConfirm = null;
 
+const VIEW_TITLES = {
+  home:'Home', mudcrab:'Mud Crab Survey', coconut:'Coconut Crab Survey',
+  sync:'Synchronization', settings:'Settings', help:'Help', about:'About', login:'Login'
+};
 function showMainView(id){
   document.querySelectorAll('.mainview').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+id).classList.add('active');
+  document.getElementById('topbarTitle').textContent = VIEW_TITLES[id] || 'KUKA';
   closeSideMenu();
   updateWizardNavVisibility();
   window.scrollTo(0,0);
@@ -1189,6 +1230,41 @@ document.getElementById('infoModalOk').addEventListener('click', ()=>{
   if(fn) fn();
 });
 
+function startFreshMudCrab(){
+  mcDraftId = null;
+  draft = blankDraft();
+  quadCounter = 0; crabCounter = 0; capturedGps = null;
+  const now = new Date();
+  draft.date = now.toISOString().slice(0,10);
+  draft.startTime = now.toTimeString().slice(0,5);
+  draft.surveyor1 = settings.surveyor || '';
+  pushDraftIntoForm();
+  goToStep(1);
+  showMainView('mudcrab');
+  const tabsEl = document.querySelector('#view-mudcrab .local-tabs');
+  tabsEl.querySelectorAll('button').forEach(function(b){b.classList.remove('active');});
+  tabsEl.querySelector('[data-localtab="survey"]').classList.add('active');
+  document.querySelectorAll('#view-mudcrab .local-tab-content').forEach(function(c){c.classList.remove('active');});
+  document.querySelector('#view-mudcrab .local-tab-content[data-localcontent="survey"]').classList.add('active');
+  updateWizardNavVisibility();
+}
+function resumeMudCrabDraft(rec){
+  mcDraftId = rec.id;
+  draft = Object.assign(blankDraft(), rec);
+  quadCounter = 0; crabCounter = 0;
+  (draft.quadrats||[]).forEach(function(q){ quadCounter++; (q.crabs||[]).forEach(function(){crabCounter++;}); });
+  capturedGps = draft.gps || null;
+  pushDraftIntoForm();
+  showMainView('mudcrab');
+  const tabsEl = document.querySelector('#view-mudcrab .local-tabs');
+  tabsEl.querySelectorAll('button').forEach(function(b){b.classList.remove('active');});
+  tabsEl.querySelector('[data-localtab="survey"]').classList.add('active');
+  document.querySelectorAll('#view-mudcrab .local-tab-content').forEach(function(c){c.classList.remove('active');});
+  document.querySelector('#view-mudcrab .local-tab-content[data-localcontent="survey"]').classList.add('active');
+  goToStep(rec.lastStep || 1);
+  updateWizardNavVisibility();
+}
+
 document.querySelectorAll('[data-openmodule]').forEach(el=>{
   el.addEventListener('click', ()=>{
     const m = el.dataset.openmodule;
@@ -1196,7 +1272,7 @@ document.querySelectorAll('[data-openmodule]').forEach(el=>{
       openInfoModal('You need to log in to access surveys. Tap "Log In" to continue.');
       return;
     }
-    if(m === 'mudcrab') showMainView('mudcrab');
+    if(m === 'mudcrab') startFreshMudCrab();
     if(m === 'coconutcrab') showMainView('coconut');
   });
 });
@@ -1422,7 +1498,7 @@ function idbDelete(storeName, key){ return new Promise((res,rej)=>{ const r=txSt
 function idbClear(storeName){ return new Promise((res,rej)=>{ const r=txStore(storeName,"readwrite").clear(); r.onsuccess=()=>res(); r.onerror=rej; }); }
 function idbGet(storeName,key){ return new Promise((res,rej)=>{ const r=txStore(storeName,"readonly").get(key); r.onsuccess=()=>res(r.result); r.onerror=rej; }); }
 
-let settings = { surveyor:"" };
+let settings = { surveyor:"", language:"en", measurementProtocol:"mm_g" };
 let currentStep = 1;
 let capturedGps = null;
 let quadCounter = 0;
@@ -1457,10 +1533,13 @@ function updateOnlineStatus(){
 }
 window.addEventListener('online', updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
+function isPendingSync(rec){
+  return !rec.synced && (rec.status || 'submitted') === 'submitted';
+}
 async function refreshUnsyncedBadge(){
   try{
     const all = await idbGetAll('surveys');
-    const pending = all.filter(function(s){return !s.synced;}).length;
+    const pending = all.filter(isPendingSync).length;
     document.getElementById('unsyncedCount').textContent = pending>0 ? (pending+' pending sync') : 'All synced';
   }catch(e){}
 }
@@ -1533,13 +1612,18 @@ function pushDraftIntoForm(){
   renderQuadList();
 }
 
+let mcDraftId = null;
 let autosaveTimer = null;
 function autosaveDraft(showToast){
   pullFormIntoDraft();
   clearTimeout(autosaveTimer);
   autosaveTimer = setTimeout(async function(){
-    await idbPut('drafts', { key:'current', value: draft, savedAt: new Date().toISOString() });
+    if(!mcDraftId) mcDraftId = uid('srv');
+    draft.lastStep = currentStep;
+    const record = Object.assign({}, draft, { id: mcDraftId, surveyType:'mudcrab', status:'draft', synced:false, savedAt: new Date().toISOString() });
+    await idbPut('surveys', record);
     if(showToast) toast('Draft saved');
+    refreshUnsyncedBadge();
   }, showToast ? 0 : 400);
 }
 document.querySelectorAll('#view-mudcrab input, #view-mudcrab select, #view-mudcrab textarea').forEach(function(el){
@@ -1726,94 +1810,175 @@ async function submitSurvey(){
     goToStep(1);
     return;
   }
-  const record = Object.assign({}, draft, { id: uid('srv'), surveyType:'mudcrab', synced:false, savedAt: new Date().toISOString() });
+  if(!mcDraftId) mcDraftId = uid('srv');
+  const record = Object.assign({}, draft, { id: mcDraftId, surveyType:'mudcrab', status:'submitted', synced:false, savedAt: new Date().toISOString() });
+  delete record.lastStep;
   await idbPut('surveys', record);
-  await idbDelete('drafts', 'current');
   toast('Survey submitted and saved locally ✔');
+  mcDraftId = null;
   draft = blankDraft();
   quadCounter = 0; crabCounter = 0; capturedGps = null;
   pushDraftIntoForm();
   goToStep(1);
   refreshUnsyncedBadge();
+  refreshRecords('mudcrab');
+}
+
+function anyWizardCurrentlyOpen(){
+  return isMudcrabSurveyTabActive() || isSocioSurveyTabActive() || isBioSurveyTabActive();
+}
+function continueDraft(proceedFn){
+  if(anyWizardCurrentlyOpen()){
+    if(confirm('Opening this draft will replace your current unsaved work in the open survey. Continue?')) proceedFn();
+  } else {
+    proceedFn();
+  }
 }
 
 async function refreshRecords(type){
   const all = await idbGetAll('surveys');
   const recs = all.filter(function(s){return s.surveyType === type;}).sort(function(a,b){ return (b.savedAt||'').localeCompare(a.savedAt||''); });
+  const drafts = recs.filter(function(s){return (s.status||'submitted') === 'draft';});
+  const submitted = recs.filter(function(s){return (s.status||'submitted') === 'submitted';});
+
   if(type === 'mudcrab'){
-    document.getElementById('mc_statTotal').textContent = recs.length;
-    document.getElementById('mc_statCrabs').textContent = recs.reduce(function(n,s){return n + s.quadrats.reduce(function(m,q){return m+q.crabs.length;},0);}, 0);
-    document.getElementById('mc_statUnsynced').textContent = recs.filter(function(s){return !s.synced;}).length;
+    document.getElementById('mc_statDrafts').textContent = drafts.length;
+    document.getElementById('mc_statTotal').textContent = submitted.length;
+    document.getElementById('mc_statCrabs').textContent = submitted.reduce(function(n,s){return n + s.quadrats.reduce(function(m,q){return m+q.crabs.length;},0);}, 0);
+    document.getElementById('mc_statUnsynced').textContent = submitted.filter(function(s){return !s.synced;}).length;
     const wrap = document.getElementById('mc_recordsList');
     wrap.innerHTML = '';
-    if(recs.length === 0){
-      wrap.innerHTML = '<div class="empty"><p><strong>No mud crab surveys yet.</strong></p><p>Surveys you submit will appear here, on this device, even with no signal.</p></div>';
-      return;
-    }
-    recs.forEach(function(rec){
-      const crabCount = rec.quadrats.reduce(function(m,q){return m+q.crabs.length;},0);
+
+    drafts.forEach(function(rec){
+      const crabCount = (rec.quadrats||[]).reduce(function(m,q){return m+q.crabs.length;},0);
       const div = document.createElement('div');
-      div.className = 'record-card' + (rec.synced ? '' : ' unsynced');
+      div.className = 'record-card draftcard';
       div.innerHTML =
-        '<div class="record-top"><div><h3>'+escapeHtml(rec.samplingSite || 'Untitled site')+'</h3></div>'+
-        '<span class="badge '+(rec.synced?'synced':'unsynced')+'">'+(rec.synced?'Synced':'Not synced')+'</span></div>'+
+        '<div class="record-top"><div><h3>'+escapeHtml(rec.samplingSite || 'Untitled draft')+'</h3></div>'+
+        '<span class="badge draft">Draft</span></div>'+
         '<div class="record-meta">'+(rec.date||'')+' '+(rec.startTime||'')+' · '+(rec.province||'')+(rec.llg?('· '+rec.llg):'')+'<br>'+
         rec.quadrats.length+' quadrat(s) · '+crabCount+' crab(s) · Surveyor: '+escapeHtml(rec.surveyor1||'—')+'</div>'+
-        '<div class="record-actions"><button class="btn-ghost" type="button" data-viewrec="'+rec.id+'">View details</button>'+
+        '<div class="record-actions"><button class="btn-primary" type="button" data-continuemc="'+rec.id+'">Continue</button>'+
         '<button class="btn-danger" type="button" data-delrec="'+rec.id+'">Delete</button></div>';
       wrap.appendChild(div);
     });
+
+    if(submitted.length === 0 && drafts.length === 0){
+      wrap.innerHTML = '<div class="empty"><p><strong>No mud crab surveys yet.</strong></p><p>Surveys you submit will appear here, on this device, even with no signal.</p></div>';
+    } else {
+      submitted.forEach(function(rec){
+        const crabCount = rec.quadrats.reduce(function(m,q){return m+q.crabs.length;},0);
+        const div = document.createElement('div');
+        div.className = 'record-card' + (rec.synced ? '' : ' unsynced');
+        div.innerHTML =
+          '<div class="record-top"><div><h3>'+escapeHtml(rec.samplingSite || 'Untitled site')+'</h3></div>'+
+          '<span class="badge '+(rec.synced?'synced':'unsynced')+'">'+(rec.synced?'Synced':'Not synced')+'</span></div>'+
+          '<div class="record-meta">'+(rec.date||'')+' '+(rec.startTime||'')+' · '+(rec.province||'')+(rec.llg?('· '+rec.llg):'')+'<br>'+
+          rec.quadrats.length+' quadrat(s) · '+crabCount+' crab(s) · Surveyor: '+escapeHtml(rec.surveyor1||'—')+'</div>'+
+          '<div class="record-actions"><button class="btn-ghost" type="button" data-viewrec="'+rec.id+'">View details</button>'+
+          '<button class="btn-danger" type="button" data-delrec="'+rec.id+'">Delete</button></div>';
+        wrap.appendChild(div);
+      });
+    }
+
+    wrap.querySelectorAll('[data-continuemc]').forEach(function(el){ el.addEventListener('click', function(){
+      const rec = drafts.find(function(r){return r.id===el.dataset.continuemc;});
+      if(rec) continueDraft(function(){ resumeMudCrabDraft(rec); });
+    }); });
     wrap.querySelectorAll('[data-viewrec]').forEach(function(el){ el.addEventListener('click', function(){viewRecord(el.dataset.viewrec);}); });
     wrap.querySelectorAll('[data-delrec]').forEach(function(el){ el.addEventListener('click', async function(){
       if(confirm('Delete this survey permanently?')){ await idbDelete('surveys', el.dataset.delrec); refreshRecords('mudcrab'); refreshUnsyncedBadge(); }
     }); });
   }
+
   if(type === 'socioeconomic'){
-    document.getElementById('se_statTotal').textContent = recs.length;
-    document.getElementById('se_statUnsynced').textContent = recs.filter(function(s){return !s.synced;}).length;
+    document.getElementById('se_statDrafts').textContent = drafts.length;
+    document.getElementById('se_statTotal').textContent = submitted.length;
+    document.getElementById('se_statUnsynced').textContent = submitted.filter(function(s){return !s.synced;}).length;
     const wrap = document.getElementById('se_recordsList');
     wrap.innerHTML = '';
-    if(recs.length === 0){
-      wrap.innerHTML = '<div class="empty"><p><strong>No coconut crab surveys yet.</strong></p><p>Surveys you submit will appear here, on this device, even with no signal.</p></div>';
-      return;
-    }
-    recs.forEach(function(rec){
+
+    drafts.forEach(function(rec){
       const div = document.createElement('div');
-      div.className = 'record-card' + (rec.synced ? '' : ' unsynced');
+      div.className = 'record-card draftcard';
       div.innerHTML =
-        '<div class="record-top"><div><h3>'+escapeHtml(rec.resp_fullname || 'Untitled respondent')+'</h3></div>'+
-        '<span class="badge '+(rec.synced?'synced':'unsynced')+'">'+(rec.synced?'Synced':'Not synced')+'</span></div>'+
+        '<div class="record-top"><div><h3>'+escapeHtml(rec.resp_fullname || 'Untitled draft')+'</h3></div>'+
+        '<span class="badge draft">Draft</span></div>'+
         '<div class="record-meta">Socio-economic · '+(rec.date||'')+' · '+escapeHtml(rec.resp_village||'')+'<br>'+
         'Surveyor: '+escapeHtml(rec.surveyor1||'—')+'</div>'+
-        '<div class="record-actions"><button class="btn-danger" type="button" data-delserec="'+rec.id+'">Delete</button></div>';
+        '<div class="record-actions"><button class="btn-primary" type="button" data-continuese="'+rec.id+'">Continue</button>'+
+        '<button class="btn-danger" type="button" data-delserec="'+rec.id+'">Delete</button></div>';
       wrap.appendChild(div);
     });
+
+    if(submitted.length === 0 && drafts.length === 0){
+      wrap.innerHTML = '<div class="empty"><p><strong>No coconut crab surveys yet.</strong></p><p>Surveys you submit will appear here, on this device, even with no signal.</p></div>';
+    } else {
+      submitted.forEach(function(rec){
+        const div = document.createElement('div');
+        div.className = 'record-card' + (rec.synced ? '' : ' unsynced');
+        div.innerHTML =
+          '<div class="record-top"><div><h3>'+escapeHtml(rec.resp_fullname || 'Untitled respondent')+'</h3></div>'+
+          '<span class="badge '+(rec.synced?'synced':'unsynced')+'">'+(rec.synced?'Synced':'Not synced')+'</span></div>'+
+          '<div class="record-meta">Socio-economic · '+(rec.date||'')+' · '+escapeHtml(rec.resp_village||'')+'<br>'+
+          'Surveyor: '+escapeHtml(rec.surveyor1||'—')+'</div>'+
+          '<div class="record-actions"><button class="btn-danger" type="button" data-delserec="'+rec.id+'">Delete</button></div>';
+        wrap.appendChild(div);
+      });
+    }
+
+    wrap.querySelectorAll('[data-continuese]').forEach(function(el){ el.addEventListener('click', function(){
+      const rec = drafts.find(function(r){return r.id===el.dataset.continuese;});
+      if(rec) continueDraft(function(){ resumeSeDraft(rec); });
+    }); });
     wrap.querySelectorAll('[data-delserec]').forEach(function(el){ el.addEventListener('click', async function(){
       if(confirm('Delete this survey permanently?')){ await idbDelete('surveys', el.dataset.delserec); refreshRecords('socioeconomic'); refreshUnsyncedBadge(); }
     }); });
   }
+
   if(type === 'biological'){
-    document.getElementById('bio_statTotal').textContent = recs.length;
-    document.getElementById('bio_statCrabs').textContent = recs.reduce(function(n,s){return n + s.baitStations.reduce(function(m,b){return m+b.crabs.length;},0);}, 0);
-    document.getElementById('bio_statUnsynced').textContent = recs.filter(function(s){return !s.synced;}).length;
+    document.getElementById('bio_statDrafts').textContent = drafts.length;
+    document.getElementById('bio_statTotal').textContent = submitted.length;
+    document.getElementById('bio_statCrabs').textContent = submitted.reduce(function(n,s){return n + s.baitStations.reduce(function(m,b){return m+b.crabs.length;},0);}, 0);
+    document.getElementById('bio_statUnsynced').textContent = submitted.filter(function(s){return !s.synced;}).length;
     const wrap = document.getElementById('bio_recordsList');
     wrap.innerHTML = '';
-    if(recs.length === 0){
-      wrap.innerHTML = '<div class="empty"><p><strong>No biological surveys yet.</strong></p><p>Surveys you submit will appear here, on this device, even with no signal.</p></div>';
-      return;
-    }
-    recs.forEach(function(rec){
-      const crabCount = rec.baitStations.reduce(function(m,b){return m+b.crabs.length;},0);
+
+    drafts.forEach(function(rec){
+      const crabCount = (rec.baitStations||[]).reduce(function(m,b){return m+b.crabs.length;},0);
       const div = document.createElement('div');
-      div.className = 'record-card' + (rec.synced ? '' : ' unsynced');
+      div.className = 'record-card draftcard';
       div.innerHTML =
-        '<div class="record-top"><div><h3>'+escapeHtml(rec.samplingSite || 'Untitled site')+'</h3></div>'+
-        '<span class="badge '+(rec.synced?'synced':'unsynced')+'">'+(rec.synced?'Synced':'Not synced')+'</span></div>'+
+        '<div class="record-top"><div><h3>'+escapeHtml(rec.samplingSite || 'Untitled draft')+'</h3></div>'+
+        '<span class="badge draft">Draft</span></div>'+
         '<div class="record-meta">Biological · '+(rec.date||'')+' '+(rec.startTime||'')+' · '+(rec.province||'')+(rec.llg?('· '+rec.llg):'')+'<br>'+
         rec.baitStations.length+' bait station(s) · '+crabCount+' crab(s) · Surveyors: '+escapeHtml(rec.surveyor1||'—')+' &amp; '+escapeHtml(rec.surveyor2||'—')+'</div>'+
-        '<div class="record-actions"><button class="btn-danger" type="button" data-delbiorec="'+rec.id+'">Delete</button></div>';
+        '<div class="record-actions"><button class="btn-primary" type="button" data-continuebio="'+rec.id+'">Continue</button>'+
+        '<button class="btn-danger" type="button" data-delbiorec="'+rec.id+'">Delete</button></div>';
       wrap.appendChild(div);
     });
+
+    if(submitted.length === 0 && drafts.length === 0){
+      wrap.innerHTML = '<div class="empty"><p><strong>No biological surveys yet.</strong></p><p>Surveys you submit will appear here, on this device, even with no signal.</p></div>';
+    } else {
+      submitted.forEach(function(rec){
+        const crabCount = rec.baitStations.reduce(function(m,b){return m+b.crabs.length;},0);
+        const div = document.createElement('div');
+        div.className = 'record-card' + (rec.synced ? '' : ' unsynced');
+        div.innerHTML =
+          '<div class="record-top"><div><h3>'+escapeHtml(rec.samplingSite || 'Untitled site')+'</h3></div>'+
+          '<span class="badge '+(rec.synced?'synced':'unsynced')+'">'+(rec.synced?'Synced':'Not synced')+'</span></div>'+
+          '<div class="record-meta">Biological · '+(rec.date||'')+' '+(rec.startTime||'')+' · '+(rec.province||'')+(rec.llg?('· '+rec.llg):'')+'<br>'+
+          rec.baitStations.length+' bait station(s) · '+crabCount+' crab(s) · Surveyors: '+escapeHtml(rec.surveyor1||'—')+' &amp; '+escapeHtml(rec.surveyor2||'—')+'</div>'+
+          '<div class="record-actions"><button class="btn-danger" type="button" data-delbiorec="'+rec.id+'">Delete</button></div>';
+        wrap.appendChild(div);
+      });
+    }
+
+    wrap.querySelectorAll('[data-continuebio]').forEach(function(el){ el.addEventListener('click', function(){
+      const rec = drafts.find(function(r){return r.id===el.dataset.continuebio;});
+      if(rec) continueDraft(function(){ resumeBioDraft(rec); });
+    }); });
     wrap.querySelectorAll('[data-delbiorec]').forEach(function(el){ el.addEventListener('click', async function(){
       if(confirm('Delete this survey permanently?')){ await idbDelete('surveys', el.dataset.delbiorec); refreshRecords('biological'); refreshUnsyncedBadge(); }
     }); });
@@ -1834,10 +1999,10 @@ async function viewRecord(id){
 document.getElementById('exportJsonBtn').addEventListener('click', async function(){
   const all = await idbGetAll('surveys');
   downloadFile('kuka_surveys_backup_'+Date.now()+'.json', JSON.stringify(all,null,2), 'application/json');
-  toast('JSON backup downloaded');
+  toast('JSON backup downloaded (includes drafts)');
 });
 document.getElementById('exportCsvBtn').addEventListener('click', async function(){
-  const all = await idbGetAll('surveys');
+  const all = await idbGetAll('surveys').then(function(recs){ return recs.filter(function(r){ return (r.status||'submitted') === 'submitted'; }); });
   const mudcrabRecs = all.filter(function(r){ return (r.surveyType||'mudcrab') === 'mudcrab'; });
   const seRecs = all.filter(function(r){ return r.surveyType === 'socioeconomic'; });
   const bioRecs = all.filter(function(r){ return r.surveyType === 'biological'; });
@@ -1925,7 +2090,7 @@ document.getElementById('exportCsvBtn').addEventListener('click', async function
 
 async function refreshSyncTab(){
   const all = await idbGetAll('surveys');
-  const pending = all.filter(function(s){return !s.synced;});
+  const pending = all.filter(isPendingSync);
   document.getElementById('syncCount').textContent = pending.length;
   document.getElementById('syncBtn').disabled = pending.length===0 || !currentUser;
 }
@@ -1938,7 +2103,7 @@ document.getElementById('syncBtn').addEventListener('click', async function(){
   if(!currentUser){ toast('You must be logged in to sync.'); return; }
   if(!navigator.onLine){ toast('No connection right now — try again when back in range.'); return; }
   const all = await idbGetAll('surveys');
-  const pending = all.filter(function(s){return !s.synced;});
+  const pending = all.filter(isPendingSync);
   const log = document.getElementById('syncLog');
   log.textContent = '';
   logSync('Starting sync of '+pending.length+' survey(s) to your KUKA account…');
@@ -1980,11 +2145,15 @@ document.getElementById('syncBtn').addEventListener('click', async function(){
 
 async function loadSettings(){
   const s = await idbGet('settings','main');
-  if(s) settings = s.value;
+  if(s) settings = Object.assign({ surveyor:"", language:"en", measurementProtocol:"mm_g" }, s.value);
   document.getElementById('s_surveyor').value = settings.surveyor || '';
+  document.getElementById('s_language').value = settings.language || 'en';
+  document.getElementById('s_measurementProtocol').value = settings.measurementProtocol || 'mm_g';
 }
 document.getElementById('saveSettingsBtn').addEventListener('click', async function(){
   settings.surveyor = document.getElementById('s_surveyor').value.trim();
+  settings.language = document.getElementById('s_language').value;
+  settings.measurementProtocol = document.getElementById('s_measurementProtocol').value;
   await idbPut('settings', { key:'main', value: settings });
   if(draft && !draft.surveyor1) { draft.surveyor1 = settings.surveyor; document.getElementById('f_surveyor1').value = settings.surveyor; }
   toast('Settings saved');
@@ -1995,10 +2164,13 @@ document.getElementById('wipeBtn').addEventListener('click', async function(){
     if(confirm('Are you absolutely sure? This cannot be undone.')){
       await idbClear('surveys');
       await idbClear('drafts');
+      mcDraftId = null;
       draft = blankDraft(); quadCounter=0; crabCounter=0; capturedGps=null;
       pushDraftIntoForm();
+      seDraftId = null;
       seDraft = blankSeDraft();
       pushSeDraftIntoForm();
+      bioDraftId = null;
       bioDraft = blankBioDraft();
       bioBaitCounter = 0; bioCrabCounter = 0; bioCapturedGps = null;
       toast('All local data deleted');
@@ -2010,6 +2182,7 @@ document.getElementById('wipeBtn').addEventListener('click', async function(){
 /* ================= Socio-economic survey (Coconut Crab) ================= */
 let seStep = 1;
 let seDraft = null;
+let seDraftId = null;
 function blankSeDraft(){
   return {
     surveyor1:'', date:'', site:'',
@@ -2038,18 +2211,34 @@ function setCheckGroupValues(containerId, arr){
   box.querySelectorAll('input[type=checkbox]').forEach(function(el){ el.checked = arr.indexOf(el.value) !== -1; });
 }
 
-document.getElementById('openSocioeconomic').addEventListener('click', async function(){
-  const saved = await idbGet('drafts','socioeconomic_current');
-  seDraft = (saved && saved.value) ? saved.value : blankSeDraft();
-  if(!seDraft.date) seDraft.date = new Date().toISOString().slice(0,10);
-  if(!seDraft.surveyor1) seDraft.surveyor1 = settings.surveyor || '';
-  pushSeDraftIntoForm();
+function openSocioWizardShell(){
   document.getElementById('coconutList').style.display = 'none';
   document.getElementById('coconutPlaceholder').style.display = 'none';
   document.getElementById('socioWizard').style.display = 'block';
-  seGoToStep(1);
+  showMainView('coconut');
+  const tabsEl = document.querySelector('#view-coconut .local-tabs');
+  tabsEl.querySelectorAll('button').forEach(function(b){b.classList.remove('active');});
+  tabsEl.querySelector('[data-localtab="survey"]').classList.add('active');
+  document.querySelectorAll('#view-coconut .local-tab-content').forEach(function(c){c.classList.remove('active');});
+  document.querySelector('#view-coconut .local-tab-content[data-localcontent="survey"]').classList.add('active');
   updateWizardNavVisibility();
+}
+document.getElementById('openSocioeconomic').addEventListener('click', async function(){
+  seDraftId = null;
+  seDraft = blankSeDraft();
+  seDraft.date = new Date().toISOString().slice(0,10);
+  seDraft.surveyor1 = settings.surveyor || '';
+  pushSeDraftIntoForm();
+  openSocioWizardShell();
+  seGoToStep(1);
 });
+function resumeSeDraft(rec){
+  seDraftId = rec.id;
+  seDraft = Object.assign(blankSeDraft(), rec);
+  pushSeDraftIntoForm();
+  openSocioWizardShell();
+  seGoToStep(rec.lastStep || 1);
+}
 document.getElementById('socioBack').addEventListener('click', function(){
   pullAllSeFields();
   autosaveSeDraft();
@@ -2225,12 +2414,17 @@ document.getElementById('socioWizard').addEventListener('change', function(e){
 });
 
 let seAutosaveTimer = null;
-function autosaveSeDraft(){
+function autosaveSeDraft(showToast){
   pullAllSeFields();
   clearTimeout(seAutosaveTimer);
   seAutosaveTimer = setTimeout(async function(){
-    await idbPut('drafts', { key:'socioeconomic_current', value: seDraft, savedAt: new Date().toISOString() });
-  }, 400);
+    if(!seDraftId) seDraftId = uid('srv');
+    seDraft.lastStep = seStep;
+    const record = Object.assign({}, seDraft, { id: seDraftId, surveyType:'socioeconomic', status:'draft', synced:false, savedAt: new Date().toISOString() });
+    await idbPut('surveys', record);
+    if(showToast) toast('Draft saved');
+    refreshUnsyncedBadge();
+  }, showToast ? 0 : 400);
 }
 
 function isSocioSurveyTabActive(){
@@ -2270,8 +2464,7 @@ document.getElementById('seNextBtn').addEventListener('click', async function(){
 });
 document.getElementById('seSaveDraftBtn').addEventListener('click', function(){
   pullAllSeFields();
-  autosaveSeDraft();
-  toast('Draft saved');
+  autosaveSeDraft(true);
 });
 
 function seReviewLine(label, value){
@@ -2363,20 +2556,24 @@ async function submitSeSurvey(){
     seGoToStep(1);
     return;
   }
-  const record = Object.assign({}, seDraft, { id: uid('se'), surveyType:'socioeconomic', synced:false, savedAt: new Date().toISOString() });
+  if(!seDraftId) seDraftId = uid('srv');
+  const record = Object.assign({}, seDraft, { id: seDraftId, surveyType:'socioeconomic', status:'submitted', synced:false, savedAt: new Date().toISOString() });
+  delete record.lastStep;
   await idbPut('surveys', record);
-  await idbDelete('drafts', 'socioeconomic_current');
   toast('Survey submitted and saved locally ✔');
+  seDraftId = null;
   seDraft = blankSeDraft();
   document.getElementById('socioWizard').style.display = 'none';
   document.getElementById('coconutList').style.display = 'block';
   updateWizardNavVisibility();
   refreshUnsyncedBadge();
+  refreshRecords('socioeconomic');
 }
 
 /* ================= Biological Survey (Coconut Crab) ================= */
 let bioStep = 1;
 let bioDraft = null;
+let bioDraftId = null;
 let bioBaitCounter = 0;
 let bioCrabCounter = 0;
 let bioCapturedGps = null;
@@ -2387,21 +2584,39 @@ function blankBioDraft(){
   };
 }
 
-document.getElementById('openBiological').addEventListener('click', async function(){
-  const saved = await idbGet('drafts','biological_current');
-  bioDraft = (saved && saved.value) ? saved.value : blankBioDraft();
-  bioBaitCounter = 0; bioCrabCounter = 0;
-  bioDraft.baitStations.forEach(function(b){ bioBaitCounter++; b.crabs.forEach(function(){bioCrabCounter++;}); });
-  if(!bioDraft.date) bioDraft.date = new Date().toISOString().slice(0,10);
-  if(!bioDraft.startTime) bioDraft.startTime = new Date().toTimeString().slice(0,5);
-  if(!bioDraft.surveyor1) bioDraft.surveyor1 = settings.surveyor || '';
-  pushBioDraftIntoForm();
+function openBioWizardShell(){
   document.getElementById('coconutList').style.display = 'none';
   document.getElementById('coconutPlaceholder').style.display = 'none';
   document.getElementById('bioWizard').style.display = 'block';
-  bioGoToStep(1);
+  showMainView('coconut');
+  const tabsEl = document.querySelector('#view-coconut .local-tabs');
+  tabsEl.querySelectorAll('button').forEach(function(b){b.classList.remove('active');});
+  tabsEl.querySelector('[data-localtab="survey"]').classList.add('active');
+  document.querySelectorAll('#view-coconut .local-tab-content').forEach(function(c){c.classList.remove('active');});
+  document.querySelector('#view-coconut .local-tab-content[data-localcontent="survey"]').classList.add('active');
   updateWizardNavVisibility();
+}
+document.getElementById('openBiological').addEventListener('click', async function(){
+  bioDraftId = null;
+  bioDraft = blankBioDraft();
+  bioBaitCounter = 0; bioCrabCounter = 0; bioCapturedGps = null;
+  bioDraft.date = new Date().toISOString().slice(0,10);
+  bioDraft.startTime = new Date().toTimeString().slice(0,5);
+  bioDraft.surveyor1 = settings.surveyor || '';
+  pushBioDraftIntoForm();
+  openBioWizardShell();
+  bioGoToStep(1);
 });
+function resumeBioDraft(rec){
+  bioDraftId = rec.id;
+  bioDraft = Object.assign(blankBioDraft(), rec);
+  bioBaitCounter = 0; bioCrabCounter = 0;
+  (bioDraft.baitStations||[]).forEach(function(b){ bioBaitCounter++; (b.crabs||[]).forEach(function(){bioCrabCounter++;}); });
+  bioCapturedGps = bioDraft.gps || null;
+  pushBioDraftIntoForm();
+  openBioWizardShell();
+  bioGoToStep(rec.lastStep || 1);
+}
 document.getElementById('bioBack').addEventListener('click', function(){
   pullBioFormIntoDraft();
   autosaveBioDraft();
@@ -2449,8 +2664,12 @@ function autosaveBioDraft(showToast){
   pullBioFormIntoDraft();
   clearTimeout(bioAutosaveTimer);
   bioAutosaveTimer = setTimeout(async function(){
-    await idbPut('drafts', { key:'biological_current', value: bioDraft, savedAt: new Date().toISOString() });
+    if(!bioDraftId) bioDraftId = uid('srv');
+    bioDraft.lastStep = bioStep;
+    const record = Object.assign({}, bioDraft, { id: bioDraftId, surveyType:'biological', status:'draft', synced:false, savedAt: new Date().toISOString() });
+    await idbPut('surveys', record);
     if(showToast) toast('Draft saved');
+    refreshUnsyncedBadge();
   }, showToast ? 0 : 400);
 }
 document.getElementById('bioWizard').addEventListener('input', function(){ autosaveBioDraft(false); });
@@ -2703,16 +2922,19 @@ async function submitBioSurvey(){
     bioGoToStep(1);
     return;
   }
-  const record = Object.assign({}, bioDraft, { id: uid('bio'), surveyType:'biological', synced:false, savedAt: new Date().toISOString() });
+  if(!bioDraftId) bioDraftId = uid('srv');
+  const record = Object.assign({}, bioDraft, { id: bioDraftId, surveyType:'biological', status:'submitted', synced:false, savedAt: new Date().toISOString() });
+  delete record.lastStep;
   await idbPut('surveys', record);
-  await idbDelete('drafts', 'biological_current');
   toast('Survey submitted and saved locally ✔');
+  bioDraftId = null;
   bioDraft = blankBioDraft();
   bioBaitCounter = 0; bioCrabCounter = 0; bioCapturedGps = null;
   document.getElementById('bioWizard').style.display = 'none';
   document.getElementById('coconutList').style.display = 'block';
   updateWizardNavVisibility();
   refreshUnsyncedBadge();
+  refreshRecords('biological');
 }
 
 (async function init(){
@@ -2728,31 +2950,15 @@ async function submitBioSurvey(){
   await loadSettings();
   updateOnlineStatus();
 
-  let resumedDraft = false;
-  const savedDraft = await idbGet('drafts','current');
-  if(savedDraft && savedDraft.value && (savedDraft.value.surveyor1 || savedDraft.value.samplingSite || savedDraft.value.quadrats.length)){
-    if(confirm('An unfinished Mud Crab Survey draft was found on this device. Resume it?')){
-      draft = savedDraft.value;
-      draft.quadrats.forEach(function(q){ quadCounter++; q.crabs.forEach(function(){crabCounter++;}); });
-      resumedDraft = true;
-    } else {
-      draft = blankDraft();
-      await idbDelete('drafts','current');
-    }
-  } else {
-    draft = blankDraft();
-    draft.surveyor1 = settings.surveyor || '';
-  }
-
+  draft = blankDraft();
   const now = new Date();
-  if(!draft.date) draft.date = now.toISOString().slice(0,10);
-  if(!draft.startTime) draft.startTime = now.toTimeString().slice(0,5);
-
+  draft.date = now.toISOString().slice(0,10);
+  draft.startTime = now.toTimeString().slice(0,5);
+  draft.surveyor1 = settings.surveyor || '';
   pushDraftIntoForm();
   goToStep(1);
 
-  if(resumedDraft && currentUser){ showMainView('mudcrab'); }
-  else { showMainView('home'); }
+  showMainView('home');
 })();
 
 let swRegistration = null;
