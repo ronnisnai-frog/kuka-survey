@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="KUKA">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
   :root{
     --mangrove-dark:#1B2E28;
@@ -178,6 +179,10 @@
   .consent-box{ display:flex; align-items:flex-start; gap:10px; background:var(--sand-dim); border-radius:8px; padding:12px; margin-top:14px; }
   .consent-box input[type=checkbox]{ width:20px; height:20px; flex:none; margin-top:2px; accent-color:var(--shell); }
   .consent-box label{ margin:0; text-transform:none; font-weight:500; font-size:0.88rem; color:var(--ink); letter-spacing:normal; }
+  .specimen-photo{ max-width:100%; border-radius:8px; margin-top:8px; display:block; border:1px solid var(--line); }
+  .photo-upload-label{ display:block; text-align:center; margin-top:4px; }
+  .gps-map{ height:200px; border-radius:8px; margin-top:8px; display:none; border:1px solid var(--line); }
+  .gps-map.show{ display:block; }
   .record-card.draftcard{ border-left-color:#7A64B8; }
   .record-meta{ font-size:0.82rem; color:#5B6259; margin-top:4px; line-height:1.5; }
   .record-actions{ margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
@@ -245,6 +250,7 @@
   <span class="side-menu-version" id="sideMenuVersion">v—</span>
   <button class="side-menu-item" data-nav="home"><span class="ic">🏠</span><span>Home</span></button>
   <button class="side-menu-item" data-nav="sync"><span class="ic">☁️</span><span>Synchronization</span></button>
+  <button class="side-menu-item" data-nav="admin" id="sideMenuAdminBtn" style="display:none;"><span class="ic">📊</span><span>Admin</span></button>
   <button class="side-menu-item" data-nav="settings"><span class="ic">⚙️</span><span>Settings</span></button>
   <button class="side-menu-item" data-nav="help"><span class="ic">❓</span><span>Help</span></button>
   <button class="side-menu-item" data-nav="about"><span class="ic">ℹ️</span><span>About</span></button>
@@ -350,6 +356,7 @@
           <label>GPS Location</label>
           <button class="btn btn-secondary btn-block" id="gpsBtn" type="button">📍 Capture GPS location</button>
           <div class="gps-readout" id="gpsReadout">Not captured yet</div>
+          <div class="gps-map" id="gpsMap"></div>
           <p class="help">One GPS reading is captured for the entire survey.</p>
           <label>End Time</label>
           <input type="time" id="f_endTime">
@@ -897,6 +904,7 @@
             <label>GPS Location</label>
             <button class="btn btn-secondary btn-block" id="bioGpsBtn" type="button">📍 Capture GPS location</button>
             <div class="gps-readout" id="bioGpsReadout">Not captured yet</div>
+            <div class="gps-map" id="bioGpsMap"></div>
             <p class="help">One GPS reading is captured for the entire survey.</p>
 
             <label>End Time</label>
@@ -947,6 +955,7 @@
       <h2>Export</h2>
       <p class="help">Works with zero signal. Produces a file you can transfer by USB, Bluetooth, or upload later.</p>
       <button class="btn btn-secondary btn-block" id="exportCsvBtn" type="button" style="margin-bottom:10px;">Export all as CSV</button>
+      <button class="btn btn-secondary btn-block" id="exportXlsxBtn" type="button" style="margin-bottom:10px;">Export all as Excel (.xlsx)</button>
       <button class="btn btn-secondary btn-block" id="exportJsonBtn" type="button">Export all as JSON (full backup)</button>
     </div>
     <div class="card">
@@ -955,6 +964,37 @@
       <p class="help">Sends unsynced surveys (from every survey type) to your KUKA account. Safe to retry — already-synced records are skipped.</p>
       <button class="btn btn-primary btn-block" id="syncBtn" type="button">Sync now (<span id="syncCount">0</span> pending)</button>
       <div id="syncLog"></div>
+    </div>
+  </section>
+
+  <section class="mainview" id="view-admin">
+    <div class="eyebrow">Admin</div>
+    <h2 style="margin-bottom:14px;">Dashboard</h2>
+    <p class="help" style="margin-bottom:14px;">Data from every surveyor's synced surveys, pulled directly from your KUKA account.</p>
+
+    <button class="btn btn-secondary btn-block" id="adminRefreshBtn" type="button" style="margin-bottom:14px;">🔄 Refresh</button>
+
+    <div class="stat-row">
+      <div class="stat"><div class="n" id="admin_statTotal">—</div><div class="l">Total surveys</div></div>
+      <div class="stat"><div class="n" id="admin_statMudcrab">—</div><div class="l">Mud Crab</div></div>
+      <div class="stat"><div class="n" id="admin_statSe">—</div><div class="l">Socio-economic</div></div>
+      <div class="stat"><div class="n" id="admin_statBio">—</div><div class="l">Biological</div></div>
+    </div>
+
+    <div class="card">
+      <h3>By Province</h3>
+      <div id="admin_provinceBreakdown"><p class="help">Tap Refresh to load.</p></div>
+    </div>
+
+    <div class="card">
+      <h3>Export All Surveyors</h3>
+      <p class="help">Download every synced survey from every surveyor as one Excel file.</p>
+      <button class="btn btn-primary btn-block" id="adminExportBtn" type="button" style="margin-top:10px;">Export All (Excel)</button>
+    </div>
+
+    <div class="card">
+      <h3>Recent Submissions</h3>
+      <div id="admin_recentList"><p class="help">Tap Refresh to load.</p></div>
     </div>
   </section>
 
@@ -986,6 +1026,7 @@
         <option value="ru">Russian</option>
         <option value="ja">Japanese</option>
       </select>
+      <p class="help">Translates the menu and screen titles. Survey questions currently remain in English.</p>
 
       <label>Measurement Protocol</label>
       <select id="s_measurementProtocol">
@@ -1037,7 +1078,22 @@
       <p class="help">Once you're back in network range:<br>
       1. Open the side menu and tap Synchronization<br>
       2. Tap Sync now to upload all unsynced surveys to your account<br>
-      3. You can also Export as CSV or JSON at any time — this works fully offline and gives you a backup file you can transfer manually</p>
+      3. You can also export as CSV, Excel (.xlsx), or JSON at any time — CSV and JSON work fully offline; Excel needs a connection the first time to load, then works offline too. All give you a backup file you can transfer manually</p>
+    </div>
+
+    <div class="card">
+      <h3>Specimen Photos</h3>
+      <p class="help">When recording a crab in the Mud Crab or Biological survey, you can optionally attach a photo of the specimen. Photos are stored on your device and sync along with the rest of your survey data.</p>
+    </div>
+
+    <div class="card">
+      <h3>GPS Map Preview</h3>
+      <p class="help">After capturing a GPS location, a small map preview shows exactly where you are. Map imagery needs an internet connection to load — your coordinates are still saved and used normally if you're offline.</p>
+    </div>
+
+    <div class="card">
+      <h3>Language</h3>
+      <p class="help">Settings lets you change the app's menu and screen titles into several languages. Survey questions themselves are currently English-only.</p>
     </div>
 
     <div class="card">
@@ -1178,9 +1234,13 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const APP_VERSION = "3.1.0";
+const APP_VERSION = "3.3.0";
 const SUPABASE_URL = "https://spwdpzcuyrwjdhvluadu.supabase.co";
+const ADMIN_EMAIL = "ronnisnai123@gmail.com";
+function isAdmin(){ return !!(currentUser && currentUser.email === ADMIN_EMAIL); }
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwd2RwemN1eXJ3amRodmx1YWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5OTQyOTYsImV4cCI6MjA5NjU3MDI5Nn0.xoI33qTtwT0SMxY_uJGQ0xSWE1o3Q0UgifguMyjvso8";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -1189,9 +1249,44 @@ let currentUser = null;
 let awaitingPasswordSet = false;
 let pendingModalConfirm = null;
 
+const TRANSLATIONS = {
+  en:{ home:'Home', sync:'Synchronization', settings:'Settings', help:'Help', about:'About', login:'Login', logout:'Logout', tagline:'A Fisheries Survey App' },
+  es:{ home:'Inicio', sync:'Sincronización', settings:'Configuración', help:'Ayuda', about:'Acerca de', login:'Iniciar sesión', logout:'Cerrar sesión', tagline:'Una aplicación de encuestas pesqueras' },
+  fr:{ home:'Accueil', sync:'Synchronisation', settings:'Paramètres', help:'Aide', about:'À propos', login:'Connexion', logout:'Déconnexion', tagline:"Une application d'enquête sur la pêche" },
+  pt:{ home:'Início', sync:'Sincronização', settings:'Configurações', help:'Ajuda', about:'Sobre', login:'Entrar', logout:'Sair', tagline:'Um aplicativo de pesquisa pesqueira' },
+  de:{ home:'Startseite', sync:'Synchronisierung', settings:'Einstellungen', help:'Hilfe', about:'Über', login:'Anmelden', logout:'Abmelden', tagline:'Eine Fischerei-Umfrage-App' },
+  ar:{ home:'الرئيسية', sync:'المزامنة', settings:'الإعدادات', help:'مساعدة', about:'حول', login:'تسجيل الدخول', logout:'تسجيل الخروج', tagline:'تطبيق استبيان مصايد الأسماك' },
+  zh:{ home:'首页', sync:'同步', settings:'设置', help:'帮助', about:'关于', login:'登录', logout:'登出', tagline:'渔业调查应用' },
+  hi:{ home:'होम', sync:'सिंक्रनाइज़ेशन', settings:'सेटिंग्स', help:'सहायता', about:'के बारे में', login:'लॉग इन करें', logout:'लॉग आउट', tagline:'एक मत्स्य पालन सर्वेक्षण ऐप' },
+  ru:{ home:'Главная', sync:'Синхронизация', settings:'Настройки', help:'Помощь', about:'О приложении', login:'Войти', logout:'Выйти', tagline:'Приложение для рыболовных опросов' },
+  ja:{ home:'ホーム', sync:'同期', settings:'設定', help:'ヘルプ', about:'このアプリについて', login:'ログイン', logout:'ログアウト', tagline:'漁業調査アプリ' }
+};
+function applyLanguage(lang){
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  const setNav = function(navId, text){
+    const el = document.querySelector('#sideMenu [data-nav="'+navId+'"] span:last-child');
+    if(el) el.textContent = text;
+  };
+  setNav('home', t.home);
+  setNav('sync', t.sync);
+  setNav('settings', t.settings);
+  setNav('help', t.help);
+  setNav('about', t.about);
+  document.getElementById('sideMenuAuthLabel').textContent = currentUser ? t.logout : t.login;
+  const taglineEl = document.querySelector('#view-home .home-hero p');
+  if(taglineEl) taglineEl.textContent = t.tagline;
+  VIEW_TITLES.home = t.home; VIEW_TITLES.sync = t.sync; VIEW_TITLES.settings = t.settings;
+  VIEW_TITLES.help = t.help; VIEW_TITLES.about = t.about; VIEW_TITLES.login = t.login;
+  const activeEl = document.querySelector('.mainview.active');
+  if(activeEl){
+    const activeId = activeEl.id.replace('view-','');
+    if(VIEW_TITLES[activeId]) document.getElementById('topbarTitle').textContent = VIEW_TITLES[activeId];
+  }
+}
+
 const VIEW_TITLES = {
   home:'Home', mudcrab:'Mud Crab Survey', coconut:'Coconut Crab Survey',
-  sync:'Synchronization', settings:'Settings', help:'Help', about:'About', login:'Login'
+  sync:'Synchronization', settings:'Settings', help:'Help', about:'About', login:'Login', admin:'Admin Dashboard'
 };
 function showMainView(id){
   document.querySelectorAll('.mainview').forEach(v=>v.classList.remove('active'));
@@ -1225,7 +1320,12 @@ document.querySelectorAll('.side-menu-item[data-nav]').forEach(el=>{
       openInfoModal('You need to log in to sync your surveys. Tap "Log In" to continue.');
       return;
     }
+    if(target === 'admin' && !isAdmin()){
+      closeSideMenu();
+      return;
+    }
     showMainView(target);
+    if(target === 'admin'){ loadAdminDashboard(); }
   });
 });
 document.getElementById('sideMenuAuthBtn').addEventListener('click', async ()=>{
@@ -1479,6 +1579,7 @@ async function applyLoggedInState(user){
   document.getElementById('userEmailLabel').textContent = name ? (name + ' · ' + user.email) : user.email;
   document.getElementById('signedInCard').style.display = 'block';
   document.getElementById('sideMenuAuthLabel').textContent = 'Logout';
+  document.getElementById('sideMenuAdminBtn').style.display = isAdmin() ? 'flex' : 'none';
   if(!name){
     name = await syncFullNameFromRequest(user);
     if(name) document.getElementById('userEmailLabel').textContent = name + ' · ' + user.email;
@@ -1488,6 +1589,7 @@ function applyLoggedOutState(){
   currentUser = null;
   document.getElementById('signedInCard').style.display = 'none';
   document.getElementById('sideMenuAuthLabel').textContent = 'Login';
+  document.getElementById('sideMenuAdminBtn').style.display = 'none';
 }
 
 supabaseClient.auth.onAuthStateChange(async (event, session)=>{
@@ -1567,6 +1669,61 @@ function getUnits(){
   const p = (settings && settings.measurementProtocol) || 'mm_g';
   const parts = p.split('_');
   return { length: parts[0] || 'mm', weight: parts[1] || 'g' };
+}
+
+let mcLeafletMap = null, mcLeafletMarker = null;
+let bioLeafletMap = null, bioLeafletMarker = null;
+function showGpsMap(kind, lat, lon){
+  if(typeof L === 'undefined') return;
+  const containerId = kind === 'mc' ? 'gpsMap' : 'bioGpsMap';
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  el.classList.add('show');
+  try{
+    if(kind === 'mc'){
+      if(!mcLeafletMap){
+        mcLeafletMap = L.map(containerId, {attributionControl:false}).setView([lat,lon], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:18}).addTo(mcLeafletMap);
+        mcLeafletMarker = L.marker([lat,lon]).addTo(mcLeafletMap);
+      } else {
+        mcLeafletMap.setView([lat,lon], 15);
+        mcLeafletMarker.setLatLng([lat,lon]);
+      }
+      setTimeout(function(){ mcLeafletMap.invalidateSize(); }, 100);
+    } else {
+      if(!bioLeafletMap){
+        bioLeafletMap = L.map(containerId, {attributionControl:false}).setView([lat,lon], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:18}).addTo(bioLeafletMap);
+        bioLeafletMarker = L.marker([lat,lon]).addTo(bioLeafletMap);
+      } else {
+        bioLeafletMap.setView([lat,lon], 15);
+        bioLeafletMarker.setLatLng([lat,lon]);
+      }
+      setTimeout(function(){ bioLeafletMap.invalidateSize(); }, 100);
+    }
+  }catch(e){ /* map tiles unavailable offline — coordinates are still saved as text */ }
+}
+
+function downscaleImage(file, maxWidth, quality){
+  return new Promise(function(resolve, reject){
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      const img = new Image();
+      img.onload = function(){
+        let w = img.width, h = img.height;
+        if(w > maxWidth){ h = Math.round(h * (maxWidth / w)); w = maxWidth; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = ev.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 function downloadFile(filename, content, mime){
   const blob = new Blob([content], {type:mime});
@@ -1665,6 +1822,7 @@ function pushDraftIntoForm(){
   document.getElementById('gpsReadout').textContent = capturedGps
     ? ('Lat ' + capturedGps.lat.toFixed(5) + ', Lon ' + capturedGps.lon.toFixed(5) + ' (±' + Math.round(capturedGps.accuracy) + 'm)')
     : 'Not captured yet';
+  if(capturedGps) showGpsMap('mc', capturedGps.lat, capturedGps.lon);
   renderQuadList();
 }
 
@@ -1695,6 +1853,7 @@ document.getElementById('gpsBtn').addEventListener('click', function(){
     function(pos){
       capturedGps = { lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy };
       readout.textContent = 'Lat ' + capturedGps.lat.toFixed(5) + ', Lon ' + capturedGps.lon.toFixed(5) + ' (±' + Math.round(capturedGps.accuracy) + 'm)';
+      showGpsMap('mc', capturedGps.lat, capturedGps.lon);
       autosaveDraft(false);
     },
     function(err){ readout.textContent = 'Could not get location (' + err.message + '). GPS chips often still work offline if the device has one.'; },
@@ -1721,7 +1880,7 @@ function toggleQuadrat(id){
 function addCrab(quadId){
   const q = draft.quadrats.find(function(x){return x.id===quadId;});
   if(!q) return;
-  q.crabs.push({ id:'cr'+(crabCounter++), species:'Scylla serrata', sex:'Male', berried:'No', molted:'No', carapaceWidth:'', weight:'', gearUsed:'Hand Collection', effort:'' });
+  q.crabs.push({ id:'cr'+(crabCounter++), species:'Scylla serrata', sex:'Male', berried:'No', molted:'No', carapaceWidth:'', weight:'', gearUsed:'Hand Collection', effort:'', photo:null });
   renderQuadList();
   autosaveDraft(false);
 }
@@ -1798,6 +1957,32 @@ function renderQuadList(){
     });
   });
   wrap.querySelectorAll('[data-delcrab]').forEach(function(el){ el.addEventListener('click', function(e){ e.stopPropagation(); removeCrab(el.dataset.qid, el.dataset.delcrab); }); });
+  wrap.querySelectorAll('[data-photoinput]').forEach(function(el){
+    el.addEventListener('click', function(e){e.stopPropagation();});
+    el.addEventListener('change', async function(e){
+      const file = e.target.files[0];
+      if(!file) return;
+      const q = draft.quadrats.find(function(x){return x.id===e.target.dataset.qid;});
+      const c = q && q.crabs.find(function(x){return x.id===e.target.dataset.photoinput;});
+      if(!c) return;
+      try{
+        c.photo = await downscaleImage(file, 800, 0.7);
+        renderQuadList();
+        autosaveDraft(false);
+      }catch(err){ toast('Could not load photo.'); }
+    });
+  });
+  wrap.querySelectorAll('[data-removephoto]').forEach(function(el){
+    el.addEventListener('click', function(e){
+      e.stopPropagation();
+      const q = draft.quadrats.find(function(x){return x.id===e.target.dataset.qid;});
+      const c = q && q.crabs.find(function(x){return x.id===e.target.dataset.removephoto;});
+      if(!c) return;
+      c.photo = null;
+      renderQuadList();
+      autosaveDraft(false);
+    });
+  });
 }
 function renderCrabEntry(quadId, c, idx){
   const u = getUnits();
@@ -1830,6 +2015,14 @@ function renderCrabEntry(quadId, c, idx){
     '</select>'+
     '<label>Effort (minutes)</label>'+
     '<input type="number" min="0" step="1" data-cfield="effort" data-qid="'+quadId+'" data-cid="'+c.id+'" value="'+c.effort+'">'+
+    '<label>Specimen Photo (optional)</label>'+
+    (c.photo ?
+      ('<img src="'+c.photo+'" class="specimen-photo">'+
+       '<button class="btn-ghost" type="button" data-removephoto="'+c.id+'" data-qid="'+quadId+'" style="margin-top:6px;">Remove photo</button>')
+      :
+      ('<label class="btn btn-secondary btn-block photo-upload-label" for="photoInput_'+c.id+'">📷 Add photo</label>'+
+       '<input type="file" accept="image/*" capture="environment" id="photoInput_'+c.id+'" data-photoinput="'+c.id+'" data-qid="'+quadId+'" style="display:none;">')
+    ) +
   '</div>';
 }
 document.getElementById('f_surveyor1').addEventListener('change', function(){ clearFieldError('f_surveyor1'); });
@@ -2088,20 +2281,20 @@ document.getElementById('exportCsvBtn').addEventListener('click', async function
 
   if(mudcrabRecs.length > 0){
     const headers = ['survey_id','start_time','date','surveyor1','province','llg','sampling_site','tide_condition','comments','lat','lon','gps_accuracy_m','end_time','synced',
-      'quadrat_number','empty_burrows','crabs_found','crab_index','species','sex','berried','molted','carapace_width_mm','weight_g','gear_used','effort_minutes'];
+      'quadrat_number','empty_burrows','crabs_found','crab_index','species','sex','berried','molted','carapace_width_mm','weight_g','gear_used','effort_minutes','has_photo'];
     const rows = [headers.join(',')];
     mudcrabRecs.forEach(function(rec){
       const base = [rec.id,rec.startTime,rec.date,rec.surveyor1,rec.province,rec.llg,rec.samplingSite,rec.tideCondition,rec.comments,
         rec.gps?rec.gps.lat:'', rec.gps?rec.gps.lon:'', rec.gps?rec.gps.accuracy:'', rec.endTime, rec.synced];
       if(!rec.quadrats || rec.quadrats.length === 0){
-        rows.push(base.concat(['','','','','','','','','','','','']).map(escapeCsv).join(','));
+        rows.push(base.concat(['','','','','','','','','','','','','']).map(escapeCsv).join(','));
       } else {
         rec.quadrats.forEach(function(q, qi){
           if(q.crabs.length === 0){
-            rows.push(base.concat([qi+1, q.emptyBurrows, q.crabsFound,'','','','','','','','','']).map(escapeCsv).join(','));
+            rows.push(base.concat([qi+1, q.emptyBurrows, q.crabsFound,'','','','','','','','','','']).map(escapeCsv).join(','));
           } else {
             q.crabs.forEach(function(c,ci){
-              rows.push(base.concat([qi+1, q.emptyBurrows, q.crabsFound, ci+1, c.species, c.sex, c.berried, c.molted, c.carapaceWidth, c.weight, c.gearUsed, c.effort]).map(escapeCsv).join(','));
+              rows.push(base.concat([qi+1, q.emptyBurrows, q.crabsFound, ci+1, c.species, c.sex, c.berried, c.molted, c.carapaceWidth, c.weight, c.gearUsed, c.effort, c.photo?'Yes':'No']).map(escapeCsv).join(','));
             });
           }
         });
@@ -2138,21 +2331,21 @@ document.getElementById('exportCsvBtn').addEventListener('click', async function
 
   if(bioRecs.length > 0){
     const bioHeaders = ['survey_id','start_time','date','surveyor1','surveyor2','province','llg','sampling_site','comments','lat','lon','gps_accuracy_m','end_time','synced',
-      'bait_number','crabs_found','weather_conditions','crab_index','cephalo_thoracic_length_mm','thoracic_length_mm','carapace_width_mm','weight_g','sex','berried','molted','habitat_type'];
+      'bait_number','crabs_found','weather_conditions','crab_index','cephalo_thoracic_length_mm','thoracic_length_mm','carapace_width_mm','weight_g','sex','berried','molted','habitat_type','has_photo'];
     const bioRows = [bioHeaders.join(',')];
     bioRecs.forEach(function(rec){
       const base = [rec.id,rec.startTime,rec.date,rec.surveyor1,rec.surveyor2,rec.province,rec.llg,rec.samplingSite,rec.comments,
         rec.gps?rec.gps.lat:'', rec.gps?rec.gps.lon:'', rec.gps?rec.gps.accuracy:'', rec.endTime, rec.synced];
       if(!rec.baitStations || rec.baitStations.length === 0){
-        bioRows.push(base.concat(['','','','','','','','','','','']).map(escapeCsv).join(','));
+        bioRows.push(base.concat(['','','','','','','','','','','','']).map(escapeCsv).join(','));
       } else {
         rec.baitStations.forEach(function(b){
           const weatherStr = (b.weather||[]).join('; ');
           if(!b.crabs || b.crabs.length === 0){
-            bioRows.push(base.concat([b.baitNumber, b.crabsFound, weatherStr, '','','','','','','','','']).map(escapeCsv).join(','));
+            bioRows.push(base.concat([b.baitNumber, b.crabsFound, weatherStr, '','','','','','','','','','']).map(escapeCsv).join(','));
           } else {
             b.crabs.forEach(function(c, ci){
-              bioRows.push(base.concat([b.baitNumber, b.crabsFound, weatherStr, ci+1, c.cephaloThoracicLength, c.thoracicLength, c.carapaceWidth, c.weight, c.sex, c.berried, c.molted, (c.habitat||[]).join('; ')]).map(escapeCsv).join(','));
+              bioRows.push(base.concat([b.baitNumber, b.crabsFound, weatherStr, ci+1, c.cephaloThoracicLength, c.thoracicLength, c.carapaceWidth, c.weight, c.sex, c.berried, c.molted, (c.habitat||[]).join('; '), c.photo?'Yes':'No']).map(escapeCsv).join(','));
             });
           }
         });
@@ -2164,6 +2357,230 @@ document.getElementById('exportCsvBtn').addEventListener('click', async function
 
   if(filesExported === 0){ toast('No surveys to export yet.'); }
   else { toast('CSV exported ('+filesExported+' file'+(filesExported>1?'s':'')+')'); }
+});
+
+document.getElementById('exportXlsxBtn').addEventListener('click', async function(){
+  if(typeof XLSX === 'undefined'){ toast('Excel export needs an internet connection the first time (loading library).'); return; }
+  const all = await idbGetAll('surveys').then(function(recs){ return recs.filter(function(r){ return (r.status||'submitted') === 'submitted'; }); });
+  const mudcrabRecs = all.filter(function(r){ return (r.surveyType||'mudcrab') === 'mudcrab'; });
+  const seRecs = all.filter(function(r){ return r.surveyType === 'socioeconomic'; });
+  const bioRecs = all.filter(function(r){ return r.surveyType === 'biological'; });
+
+  if(mudcrabRecs.length === 0 && seRecs.length === 0 && bioRecs.length === 0){
+    toast('No surveys to export yet.');
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+
+  if(mudcrabRecs.length > 0){
+    const headers = ['Survey ID','Start Time','Date','Surveyor','Province','LLG','Sampling Site','Tide Condition','Comments','Lat','Lon','GPS Accuracy (m)','End Time','Synced',
+      'Quadrat #','Empty Burrows','Crabs Found','Crab #','Species','Sex','Berried','Molted','Carapace Width','Weight','Gear Used','Effort (min)','Has Photo'];
+    const aoa = [headers];
+    mudcrabRecs.forEach(function(rec){
+      const base = [rec.id,rec.startTime,rec.date,rec.surveyor1,rec.province,rec.llg,rec.samplingSite,rec.tideCondition,rec.comments,
+        rec.gps?rec.gps.lat:'', rec.gps?rec.gps.lon:'', rec.gps?rec.gps.accuracy:'', rec.endTime, rec.synced?'Yes':'No'];
+      if(!rec.quadrats || rec.quadrats.length === 0){
+        aoa.push(base.concat(['','','','','','','','','','','','','']));
+      } else {
+        rec.quadrats.forEach(function(q, qi){
+          if(q.crabs.length === 0){
+            aoa.push(base.concat([qi+1, q.emptyBurrows, q.crabsFound,'','','','','','','','','','']));
+          } else {
+            q.crabs.forEach(function(c,ci){
+              aoa.push(base.concat([qi+1, q.emptyBurrows, q.crabsFound, ci+1, c.species, c.sex, c.berried, c.molted, c.carapaceWidth, c.weight, c.gearUsed, c.effort, c.photo?'Yes':'No']));
+            });
+          }
+        });
+      }
+    });
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = headers.map(function(){ return {wch:16}; });
+    XLSX.utils.book_append_sheet(wb, ws, 'Mud Crab Survey');
+  }
+
+  if(seRecs.length > 0){
+    const headers = ['Survey ID','Date','Surveyor','Contact Details','Full Name','Gender','Age','Marital Status','Province','District','LLG','Village','Contact Details','Consent',
+      'Q1 Harvest','Q2 Purpose','Q3 Main Income','Q3 Explain','Q4 Other Income','Q5 Frequency','Q5 Amount','Q6 Years','Q7 Income Change',
+      'Q8 Consume Freq','Q9 Protein Source','Q10 Food Supply Affected','Q10 Explain',
+      'Q11 Days/Week','Q12 Hours/Trip','Q13 Catch Trend','Q14 Size Change','Q15 Methods','Q15 Other','Q16 Materials','Q17 Selective','Q17 Explain',
+      'Q18 Sell Where','Q18 Other','Q19 Small','Q19 Medium','Q19 Large','Q20 Demand Change',
+      'Q21 Spawn Months','Q21 Other','Q22 Molt Months','Q22 Other','Q23 Large Period','Q23 Specify','Q24 Small Period','Q24 Specify','Q25 Habitats','Q25 Other','Q26 Active Time',
+      'Q27 Aware Rules','Q28 Management','Q28 Catch Limit','Q29 Set By','Q30 Restriction Effect',
+      'Q31 Population','Q32 Threats','Q32 Other','Q33 Actions'];
+    const aoa = [headers];
+    seRecs.forEach(function(rec){
+      aoa.push([rec.id, rec.date, rec.surveyor1, rec.site, rec.resp_fullname, rec.resp_gender, rec.resp_age, rec.resp_marital, rec.resp_province, rec.resp_district, rec.resp_llg, rec.resp_village, rec.resp_contact, rec.consent?'Yes':'No',
+        rec.q1_harvest, (rec.q2_purpose||[]).join('; '), rec.q3_mainincome, rec.q3_explain, rec.q4_otherincome, rec.q5_freq, rec.q5_amount, rec.q6_years, rec.q7_incomechange,
+        rec.q8_consumefreq, rec.q9_protein, rec.q10_foodsupply, rec.q10_explain,
+        rec.q11_days, rec.q12_hours, rec.q13_catchtrend, rec.q14_sizechange, (rec.q15_methods||[]).join('; '), rec.q15_other, rec.q16_materials, rec.q17_selective, rec.q17_explain,
+        (rec.q18_sellwhere||[]).join('; '), rec.q18_other, rec.q19_small, rec.q19_medium, rec.q19_large, rec.q20_demandchange,
+        (rec.q21_spawnmonths||[]).join('; '), rec.q21_other, (rec.q22_moltmonths||[]).join('; '), rec.q22_other, rec.q23_largeperiod, rec.q23_specify, rec.q24_smallperiod, rec.q24_specify, (rec.q25_habitats||[]).join('; '), rec.q25_other, rec.q26_activetime,
+        rec.q27_awarerules, (rec.q28_management||[]).join('; '), rec.q28_catchlimit, (rec.q29_setby||[]).join('; '), rec.q30_restrictioneffect,
+        rec.q31_population, (rec.q32_threats||[]).join('; '), rec.q32_other, rec.q33_actions]);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = headers.map(function(){ return {wch:16}; });
+    XLSX.utils.book_append_sheet(wb, ws, 'Socio-economic Survey');
+  }
+
+  if(bioRecs.length > 0){
+    const headers = ['Survey ID','Start Time','Date','Surveyor 1','Surveyor 2','Province','LLG','Sampling Site','Comments','Lat','Lon','GPS Accuracy (m)','End Time','Synced',
+      'Bait #','Crabs Found','Weather','Crab #','Cephalo Thoracic Length','Thoracic Length','Carapace Width','Weight','Sex','Berried','Molted','Habitat Type','Has Photo'];
+    const aoa = [headers];
+    bioRecs.forEach(function(rec){
+      const base = [rec.id,rec.startTime,rec.date,rec.surveyor1,rec.surveyor2,rec.province,rec.llg,rec.samplingSite,rec.comments,
+        rec.gps?rec.gps.lat:'', rec.gps?rec.gps.lon:'', rec.gps?rec.gps.accuracy:'', rec.endTime, rec.synced?'Yes':'No'];
+      if(!rec.baitStations || rec.baitStations.length === 0){
+        aoa.push(base.concat(['','','','','','','','','','','','','']));
+      } else {
+        rec.baitStations.forEach(function(b){
+          const weatherStr = (b.weather||[]).join('; ');
+          if(!b.crabs || b.crabs.length === 0){
+            aoa.push(base.concat([b.baitNumber, b.crabsFound, weatherStr, '','','','','','','','','','']));
+          } else {
+            b.crabs.forEach(function(c, ci){
+              aoa.push(base.concat([b.baitNumber, b.crabsFound, weatherStr, ci+1, c.cephaloThoracicLength, c.thoracicLength, c.carapaceWidth, c.weight, c.sex, c.berried, c.molted, (c.habitat||[]).join('; '), c.photo?'Yes':'No']));
+            });
+          }
+        });
+      }
+    });
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = headers.map(function(){ return {wch:16}; });
+    XLSX.utils.book_append_sheet(wb, ws, 'Biological Survey');
+  }
+
+  XLSX.writeFile(wb, 'kuka_surveys_'+Date.now()+'.xlsx');
+  toast('Excel file exported');
+});
+
+/* ================= Admin Dashboard ================= */
+function getAdminProvince(row){
+  if(row.province) return row.province;
+  if(row.data && row.data.province) return row.data.province;
+  if(row.data && row.data.resp_province) return row.data.resp_province;
+  return 'Unknown';
+}
+async function loadAdminDashboard(){
+  if(!isAdmin()) return;
+  document.getElementById('admin_provinceBreakdown').innerHTML = '<p class="help">Loading…</p>';
+  document.getElementById('admin_recentList').innerHTML = '<p class="help">Loading…</p>';
+  try{
+    const result = await supabaseClient.from('surveys').select('*').order('submitted_at', { ascending:false });
+    if(result.error){
+      document.getElementById('admin_provinceBreakdown').innerHTML = '<p class="help">Could not load data: '+escapeHtml(result.error.message)+'</p>';
+      document.getElementById('admin_recentList').innerHTML = '';
+      return;
+    }
+    const rows = result.data || [];
+    const mc = rows.filter(function(r){return r.survey_type === 'mudcrab';});
+    const se = rows.filter(function(r){return r.survey_type === 'socioeconomic';});
+    const bio = rows.filter(function(r){return r.survey_type === 'biological';});
+    document.getElementById('admin_statTotal').textContent = rows.length;
+    document.getElementById('admin_statMudcrab').textContent = mc.length;
+    document.getElementById('admin_statSe').textContent = se.length;
+    document.getElementById('admin_statBio').textContent = bio.length;
+
+    const provinceCounts = {};
+    rows.forEach(function(r){
+      const p = getAdminProvince(r);
+      provinceCounts[p] = (provinceCounts[p]||0) + 1;
+    });
+    const provinceHtml = Object.keys(provinceCounts).sort(function(a,b){return provinceCounts[b]-provinceCounts[a];})
+      .map(function(p){ return '<div class="review-line"><span class="k">'+escapeHtml(p)+'</span><span class="v">'+provinceCounts[p]+'</span></div>'; }).join('');
+    document.getElementById('admin_provinceBreakdown').innerHTML = provinceHtml || '<p class="help">No data yet.</p>';
+
+    const recent = rows.slice(0, 30);
+    const recentWrap = document.getElementById('admin_recentList');
+    recentWrap.innerHTML = '';
+    if(recent.length === 0){
+      recentWrap.innerHTML = '<p class="help">No submissions yet.</p>';
+    } else {
+      recent.forEach(function(r){
+        const label = r.sampling_site || (r.data && (r.data.resp_fullname || r.data.site)) || 'Untitled';
+        const typeLabel = r.survey_type === 'mudcrab' ? 'Mud Crab' : (r.survey_type === 'socioeconomic' ? 'Socio-economic' : 'Biological');
+        const div = document.createElement('div');
+        div.className = 'record-card';
+        div.innerHTML = '<div class="record-top"><div><h3>'+escapeHtml(label)+'</h3></div><span class="badge synced">'+typeLabel+'</span></div>'+
+          '<div class="record-meta">'+(r.survey_date||'')+' · Surveyor: '+escapeHtml(r.surveyor1||'—')+'</div>';
+        recentWrap.appendChild(div);
+      });
+    }
+  } catch(err){
+    document.getElementById('admin_provinceBreakdown').innerHTML = '<p class="help">Could not load data. Check your connection and try again.</p>';
+    document.getElementById('admin_recentList').innerHTML = '';
+  }
+}
+document.getElementById('adminRefreshBtn').addEventListener('click', loadAdminDashboard);
+
+document.getElementById('adminExportBtn').addEventListener('click', async function(){
+  if(!isAdmin()) return;
+  if(typeof XLSX === 'undefined'){ toast('Excel export needs an internet connection the first time (loading library).'); return; }
+  toast('Fetching all surveyor data…');
+  const result = await supabaseClient.from('surveys').select('*').order('submitted_at', { ascending:false });
+  if(result.error){ toast('Could not fetch data: '+result.error.message); return; }
+  const rows = result.data || [];
+  if(rows.length === 0){ toast('No synced surveys to export yet.'); return; }
+
+  const wb = XLSX.utils.book_new();
+  const mc = rows.filter(function(r){return r.survey_type === 'mudcrab';});
+  const se = rows.filter(function(r){return r.survey_type === 'socioeconomic';});
+  const bio = rows.filter(function(r){return r.survey_type === 'biological';});
+
+  if(mc.length > 0){
+    const headers = ['Survey ID','Surveyor','Date','Province','LLG','Sampling Site','Tide Condition','Comments','Quadrat #','Crab #','Species','Sex','Carapace Width','Weight'];
+    const aoa = [headers];
+    mc.forEach(function(rec){
+      const base = [rec.id, rec.surveyor1, rec.survey_date, rec.province, rec.llg, rec.sampling_site, rec.tide_condition, rec.comments];
+      const quadrats = rec.quadrats || [];
+      if(quadrats.length === 0){ aoa.push(base.concat(['','','','','',''])); }
+      else{
+        quadrats.forEach(function(q, qi){
+          if(!q.crabs || q.crabs.length===0){ aoa.push(base.concat([qi+1,'','','','',''])); }
+          else{ q.crabs.forEach(function(c,ci){ aoa.push(base.concat([qi+1, ci+1, c.species, c.sex, c.carapaceWidth, c.weight])); }); }
+        });
+      }
+    });
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = headers.map(function(){return {wch:16};});
+    XLSX.utils.book_append_sheet(wb, ws, 'Mud Crab (All Surveyors)');
+  }
+
+  if(se.length > 0){
+    const headers = ['Survey ID','Surveyor','Date','Respondent','Village','Province','Consent','Main Income Source','Household Population Note'];
+    const aoa = [headers];
+    se.forEach(function(rec){
+      const d = rec.data || {};
+      aoa.push([rec.id, rec.surveyor1, rec.survey_date, d.resp_fullname, d.resp_village, d.resp_province, d.consent?'Yes':'No', d.q3_mainincome, d.q31_population]);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = headers.map(function(){return {wch:18};});
+    XLSX.utils.book_append_sheet(wb, ws, 'Socio-economic (All Surveyors)');
+  }
+
+  if(bio.length > 0){
+    const headers = ['Survey ID','Surveyor 1','Surveyor 2','Date','Province','LLG','Sampling Site','Bait #','Crab #','Sex','Carapace Width','Weight'];
+    const aoa = [headers];
+    bio.forEach(function(rec){
+      const d = rec.data || {};
+      const base = [rec.id, rec.surveyor1, d.surveyor2, rec.survey_date, rec.province || d.province, rec.llg || d.llg, rec.sampling_site, ];
+      const stations = d.baitStations || [];
+      if(stations.length === 0){ aoa.push(base.concat(['','','','',''])); }
+      else{
+        stations.forEach(function(b, bi){
+          if(!b.crabs || b.crabs.length===0){ aoa.push(base.concat([b.baitNumber,'','','',''])); }
+          else{ b.crabs.forEach(function(c,ci){ aoa.push(base.concat([b.baitNumber, ci+1, c.sex, c.carapaceWidth, c.weight])); }); }
+        });
+      }
+    });
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = headers.map(function(){return {wch:16};});
+    XLSX.utils.book_append_sheet(wb, ws, 'Biological (All Surveyors)');
+  }
+
+  XLSX.writeFile(wb, 'kuka_all_surveyors_'+Date.now()+'.xlsx');
+  toast('Export complete — '+rows.length+' total surveys');
 });
 
 async function refreshSyncTab(){
@@ -2234,6 +2651,7 @@ document.getElementById('saveSettingsBtn').addEventListener('click', async funct
   settings.measurementProtocol = document.getElementById('s_measurementProtocol').value;
   await idbPut('settings', { key:'main', value: settings });
   if(draft && !draft.surveyor1) { draft.surveyor1 = settings.surveyor; document.getElementById('f_surveyor1').value = settings.surveyor; }
+  applyLanguage(settings.language);
   toast('Settings saved');
   refreshSyncTab();
 });
@@ -2757,6 +3175,7 @@ function pushBioDraftIntoForm(){
   document.getElementById('bioGpsReadout').textContent = bioCapturedGps
     ? ('Lat ' + bioCapturedGps.lat.toFixed(5) + ', Lon ' + bioCapturedGps.lon.toFixed(5) + ' (±' + Math.round(bioCapturedGps.accuracy) + 'm)')
     : 'Not captured yet';
+  if(bioCapturedGps) showGpsMap('bio', bioCapturedGps.lat, bioCapturedGps.lon);
   renderBaitList();
 }
 
@@ -2784,6 +3203,7 @@ document.getElementById('bioGpsBtn').addEventListener('click', function(){
     function(pos){
       bioCapturedGps = { lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy };
       readout.textContent = 'Lat ' + bioCapturedGps.lat.toFixed(5) + ', Lon ' + bioCapturedGps.lon.toFixed(5) + ' (±' + Math.round(bioCapturedGps.accuracy) + 'm)';
+      showGpsMap('bio', bioCapturedGps.lat, bioCapturedGps.lon);
       autosaveBioDraft(false);
     },
     function(err){ readout.textContent = 'Could not get location (' + err.message + ').'; },
@@ -2811,7 +3231,7 @@ function toggleBaitStation(id){
 function addBioCrab(baitId){
   const b = bioDraft.baitStations.find(function(x){return x.id===baitId;});
   if(!b) return;
-  b.crabs.push({ id:'bc'+(bioCrabCounter++), cephaloThoracicLength:'', thoracicLength:'', carapaceWidth:'', weight:'', sex:'Male', berried:'No', molted:'No', habitat:[] });
+  b.crabs.push({ id:'bc'+(bioCrabCounter++), cephaloThoracicLength:'', thoracicLength:'', carapaceWidth:'', weight:'', sex:'Male', berried:'No', molted:'No', habitat:[], photo:null });
   renderBaitList();
   autosaveBioDraft(false);
 }
@@ -2913,6 +3333,32 @@ function renderBaitList(){
     });
   });
   wrap.querySelectorAll('[data-delbcrab]').forEach(function(el){ el.addEventListener('click', function(e){ e.stopPropagation(); removeBioCrab(el.dataset.bid2, el.dataset.delbcrab); }); });
+  wrap.querySelectorAll('[data-biophotoinput]').forEach(function(el){
+    el.addEventListener('click', function(e){e.stopPropagation();});
+    el.addEventListener('change', async function(e){
+      const file = e.target.files[0];
+      if(!file) return;
+      const b = bioDraft.baitStations.find(function(x){return x.id===e.target.dataset.bid2;});
+      const c = b && b.crabs.find(function(x){return x.id===e.target.dataset.biophotoinput;});
+      if(!c) return;
+      try{
+        c.photo = await downscaleImage(file, 800, 0.7);
+        renderBaitList();
+        autosaveBioDraft(false);
+      }catch(err){ toast('Could not load photo.'); }
+    });
+  });
+  wrap.querySelectorAll('[data-removebiophoto]').forEach(function(el){
+    el.addEventListener('click', function(e){
+      e.stopPropagation();
+      const b = bioDraft.baitStations.find(function(x){return x.id===e.target.dataset.bid2;});
+      const c = b && b.crabs.find(function(x){return x.id===e.target.dataset.removebiophoto;});
+      if(!c) return;
+      c.photo = null;
+      renderBaitList();
+      autosaveBioDraft(false);
+    });
+  });
 }
 function renderBioCrabEntry(baitId, c, idx){
   const u = getUnits();
@@ -2942,6 +3388,14 @@ function renderBioCrabEntry(baitId, c, idx){
     '<div class="check-group">'+
       HABITAT_OPTIONS.map(function(h){ return '<label class="check-opt"><input type="checkbox" data-chabitat data-bid2="'+baitId+'" data-cid2="'+c.id+'" value="'+h+'" '+(c.habitat.indexOf(h)!==-1?'checked':'')+'> '+h+'</label>'; }).join('') +
     '</div>'+
+    '<label>Specimen Photo (optional)</label>'+
+    (c.photo ?
+      ('<img src="'+c.photo+'" class="specimen-photo">'+
+       '<button class="btn-ghost" type="button" data-removebiophoto="'+c.id+'" data-bid2="'+baitId+'" style="margin-top:6px;">Remove photo</button>')
+      :
+      ('<label class="btn btn-secondary btn-block photo-upload-label" for="bioPhotoInput_'+c.id+'">📷 Add photo</label>'+
+       '<input type="file" accept="image/*" capture="environment" id="bioPhotoInput_'+c.id+'" data-biophotoinput="'+c.id+'" data-bid2="'+baitId+'" style="display:none;">')
+    ) +
   '</div>';
 }
 document.getElementById('addBaitBtn').addEventListener('click', addBaitStation);
@@ -3056,6 +3510,7 @@ async function submitBioSurvey(){
 
   await openDb();
   await loadSettings();
+  applyLanguage(settings.language);
   updateOnlineStatus();
 
   draft = blankDraft();
