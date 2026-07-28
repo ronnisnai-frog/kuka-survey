@@ -85,8 +85,11 @@
   .local-tab-content{ display:none; }
   .local-tab-content.active{ display:block; }
 
-  #progress, #seProgress, #bioProgress{ display:flex; align-items:center; margin-bottom:18px; flex-wrap:wrap; }
-  #progress .step, #seProgress .step, #bioProgress .step{ flex:1; text-align:center; position:relative; min-width:11%; margin-bottom:8px; }
+  #progress, #seProgress, #bioProgress{
+    display:flex; align-items:flex-start; margin-bottom:18px;
+    overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:6px; scrollbar-width:thin;
+  }
+  #progress .step, #seProgress .step, #bioProgress .step{ flex:0 0 62px; width:62px; text-align:center; position:relative; }
   #progress .step .circ, #seProgress .step .circ, #bioProgress .step .circ{
     width:28px; height:28px; border-radius:50%; background:var(--paper); border:2px solid var(--line);
     color:var(--tide); font-size:0.78rem; font-weight:700; display:flex; align-items:center; justify-content:center;
@@ -94,9 +97,12 @@
   }
   #progress .step.done .circ, #seProgress .step.done .circ, #bioProgress .step.done .circ{ background:var(--mangrove-mid); border-color:var(--mangrove-mid); color:#fff; }
   #progress .step.active .circ, #seProgress .step.active .circ, #bioProgress .step.active .circ{ background:var(--shell); border-color:var(--shell); color:#fff; }
-  #progress .step .lbl, #seProgress .step .lbl, #bioProgress .step .lbl{ font-size:0.62rem; text-transform:uppercase; letter-spacing:0.3px; color:var(--tide); font-weight:700; }
+  #progress .step .lbl, #seProgress .step .lbl, #bioProgress .step .lbl{
+    font-size:0.6rem; text-transform:uppercase; letter-spacing:0.2px; color:var(--tide); font-weight:700;
+    white-space:normal; line-height:1.15; word-break:break-word; padding:0 2px;
+  }
   #progress .step.active .lbl, #seProgress .step.active .lbl, #bioProgress .step.active .lbl{ color:var(--shell-dim); }
-  #progress .bar, #seProgress .bar, #bioProgress .bar{ position:absolute; top:14px; left:-50%; width:100%; height:2px; background:var(--line); z-index:-1; }
+  #progress .bar, #seProgress .bar, #bioProgress .bar{ position:absolute; top:14px; left:-31px; width:62px; height:2px; background:var(--line); z-index:-1; }
   #progress .step.done .bar, #progress .step.active .bar, #seProgress .step.done .bar, #seProgress .step.active .bar, #bioProgress .step.done .bar, #bioProgress .step.active .bar{ background:var(--mangrove-mid); }
   #progress .step:first-child .bar, #seProgress .step:first-child .bar, #bioProgress .step:first-child .bar{ display:none; }
 
@@ -1237,7 +1243,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const APP_VERSION = "3.3.0";
+const APP_VERSION = "3.3.1";
 const SUPABASE_URL = "https://spwdpzcuyrwjdhvluadu.supabase.co";
 const ADMIN_EMAIL = "ronnisnai123@gmail.com";
 function isAdmin(){ return !!(currentUser && currentUser.email === ADMIN_EMAIL); }
@@ -1753,6 +1759,11 @@ async function refreshUnsyncedBadge(){
   }catch(e){}
 }
 
+function scrollActiveStepIntoView(containerId){
+  const el = document.querySelector('#'+containerId+' .step.active');
+  if(el) el.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' });
+}
+
 function goToStep(n){
   currentStep = n;
   document.querySelectorAll('.wizard-step').forEach(function(el){
@@ -1768,6 +1779,7 @@ function goToStep(n){
   nextBtn.textContent = (n === 4) ? 'Submit Survey ✔' : 'Next ▶';
   if(n === 4) renderReview();
   window.scrollTo(0,0);
+  scrollActiveStepIntoView('progress');
 }
 document.getElementById('prevBtn').addEventListener('click', function(){ if(currentStep>1){ pullFormIntoDraft(); goToStep(currentStep-1); } });
 document.getElementById('nextBtn').addEventListener('click', async function(){
@@ -2951,6 +2963,7 @@ function seGoToStep(n){
   nextBtn.textContent = (n === 10) ? 'Submit Survey ✔' : 'Next ▶';
   if(n === 10){ pullAllSeFields(); renderSeReview(); }
   window.scrollTo(0,0);
+  scrollActiveStepIntoView('seProgress');
   updateWizardNavVisibility();
 }
 document.getElementById('sePrevBtn').addEventListener('click', function(){ if(seStep>1){ pullAllSeFields(); autosaveSeDraft(); seGoToStep(seStep-1); } });
@@ -3423,6 +3436,7 @@ function bioGoToStep(n){
   nextBtn.textContent = (n === 4) ? 'Submit Survey ✔' : 'Next ▶';
   if(n === 4){ pullBioFormIntoDraft(); renderBioReview(); }
   window.scrollTo(0,0);
+  scrollActiveStepIntoView('bioProgress');
   updateWizardNavVisibility();
 }
 document.getElementById('bioPrevBtn').addEventListener('click', function(){ if(bioStep>1){ pullBioFormIntoDraft(); autosaveBioDraft(); bioGoToStep(bioStep-1); } });
