@@ -1076,7 +1076,7 @@
 
     <div class="card">
       <h3>Saving Your Work</h3>
-      <p class="help">Tap Save Draft at any point to save your progress without submitting. Drafts appear in that survey's Records tab, badged "Draft," with a Continue button so you can pick up exactly where you left off — even after closing the app. Your work also autosaves in the background as you type. Submitted surveys stay safely on your device until you sync them — nothing is lost by being offline.</p>
+      <p class="help">Tap Save Draft at any point to save your progress without submitting — this is the only time your in-progress work is written to storage, so Records only ever shows drafts you deliberately chose to save. After saving, you'll be asked whether to keep editing, view Records, or go Home. Saved drafts appear in that survey's Records tab, badged "Draft," with a Continue button so you can pick up exactly where you left off. Submitted surveys stay safely on your device until you sync them — nothing is lost by being offline.</p>
     </div>
 
     <div class="card">
@@ -1224,6 +1224,18 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="draftSavedModal">
+  <div class="modal-card">
+    <h3>Draft Saved</h3>
+    <p>Your progress has been saved. What would you like to do next?</p>
+    <div class="modal-actions" style="flex-direction:column; gap:8px;">
+      <button class="btn btn-primary btn-block" id="draftModalContinue">Continue Editing</button>
+      <button class="btn btn-secondary btn-block" id="draftModalRecords">Go to Records</button>
+      <button class="btn btn-ghost btn-block" id="draftModalHome">Go to Home</button>
+    </div>
+  </div>
+</div>
+
 <div id="setPasswordScreen">
   <div class="authCard">
     <h1>🦀 KUKA</h1>
@@ -1243,7 +1255,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const APP_VERSION = "3.3.1";
+const APP_VERSION = "3.4.0";
 const SUPABASE_URL = "https://spwdpzcuyrwjdhvluadu.supabase.co";
 const ADMIN_EMAIL = "ronnisnai123@gmail.com";
 function isAdmin(){ return !!(currentUser && currentUser.email === ADMIN_EMAIL); }
@@ -1359,6 +1371,38 @@ document.getElementById('infoModalOk').addEventListener('click', ()=>{
   const fn = pendingModalConfirm;
   closeInfoModal();
   if(fn) fn();
+});
+
+let draftModalType = null;
+function openDraftSavedModal(type){
+  draftModalType = type;
+  document.getElementById('draftSavedModal').classList.add('show');
+}
+function closeDraftSavedModal(){
+  document.getElementById('draftSavedModal').classList.remove('show');
+  draftModalType = null;
+}
+function goToRecordsFor(type){
+  const viewId = type === 'mudcrab' ? 'mudcrab' : 'coconut';
+  showMainView(viewId);
+  const tabsEl = document.querySelector('#view-'+viewId+' .local-tabs');
+  tabsEl.querySelectorAll('button').forEach(function(b){b.classList.remove('active');});
+  tabsEl.querySelector('[data-localtab="records"]').classList.add('active');
+  document.querySelectorAll('#view-'+viewId+' .local-tab-content').forEach(function(c){c.classList.remove('active');});
+  document.querySelector('#view-'+viewId+' .local-tab-content[data-localcontent="records"]').classList.add('active');
+  updateWizardNavVisibility();
+  if(type === 'mudcrab'){ refreshRecords('mudcrab'); }
+  else { refreshRecords(type); }
+}
+document.getElementById('draftModalContinue').addEventListener('click', closeDraftSavedModal);
+document.getElementById('draftModalRecords').addEventListener('click', function(){
+  const type = draftModalType;
+  closeDraftSavedModal();
+  if(type) goToRecordsFor(type);
+});
+document.getElementById('draftModalHome').addEventListener('click', function(){
+  closeDraftSavedModal();
+  showMainView('home');
 });
 
 function startFreshMudCrab(){
@@ -1842,15 +1886,17 @@ let mcDraftId = null;
 let autosaveTimer = null;
 function autosaveDraft(showToast){
   pullFormIntoDraft();
+  if(!showToast) return;
   clearTimeout(autosaveTimer);
   autosaveTimer = setTimeout(async function(){
     if(!mcDraftId) mcDraftId = uid('srv');
     draft.lastStep = currentStep;
     const record = Object.assign({}, draft, { id: mcDraftId, surveyType:'mudcrab', status:'draft', synced:false, savedAt: new Date().toISOString() });
     await idbPut('surveys', record);
-    if(showToast) toast('Draft saved');
+    toast('Draft saved');
     refreshUnsyncedBadge();
-  }, showToast ? 0 : 400);
+    openDraftSavedModal('mudcrab');
+  }, 0);
 }
 document.querySelectorAll('#view-mudcrab input, #view-mudcrab select, #view-mudcrab textarea').forEach(function(el){
   el.addEventListener('input', function(){autosaveDraft(false);});
@@ -2929,15 +2975,17 @@ document.getElementById('socioWizard').addEventListener('change', function(e){
 let seAutosaveTimer = null;
 function autosaveSeDraft(showToast){
   pullAllSeFields();
+  if(!showToast) return;
   clearTimeout(seAutosaveTimer);
   seAutosaveTimer = setTimeout(async function(){
     if(!seDraftId) seDraftId = uid('srv');
     seDraft.lastStep = seStep;
     const record = Object.assign({}, seDraft, { id: seDraftId, surveyType:'socioeconomic', status:'draft', synced:false, savedAt: new Date().toISOString() });
     await idbPut('surveys', record);
-    if(showToast) toast('Draft saved');
+    toast('Draft saved');
     refreshUnsyncedBadge();
-  }, showToast ? 0 : 400);
+    openDraftSavedModal('socioeconomic');
+  }, 0);
 }
 
 function isSocioSurveyTabActive(){
@@ -3195,15 +3243,17 @@ function pushBioDraftIntoForm(){
 let bioAutosaveTimer = null;
 function autosaveBioDraft(showToast){
   pullBioFormIntoDraft();
+  if(!showToast) return;
   clearTimeout(bioAutosaveTimer);
   bioAutosaveTimer = setTimeout(async function(){
     if(!bioDraftId) bioDraftId = uid('srv');
     bioDraft.lastStep = bioStep;
     const record = Object.assign({}, bioDraft, { id: bioDraftId, surveyType:'biological', status:'draft', synced:false, savedAt: new Date().toISOString() });
     await idbPut('surveys', record);
-    if(showToast) toast('Draft saved');
+    toast('Draft saved');
     refreshUnsyncedBadge();
-  }, showToast ? 0 : 400);
+    openDraftSavedModal('biological');
+  }, 0);
 }
 document.getElementById('bioWizard').addEventListener('input', function(e){ autosaveBioDraft(false); if(['bio_llg','bio_samplingSite'].indexOf(e.target.id)!==-1) clearFieldError(e.target.id); });
 document.getElementById('bioWizard').addEventListener('change', function(e){ autosaveBioDraft(false); if(['bio_surveyor1','bio_surveyor2','bio_province'].indexOf(e.target.id)!==-1) clearFieldError(e.target.id); });
