@@ -114,6 +114,10 @@
   }
   .module-card:active{ border-color:var(--shell); }
   .module-icon{ font-size:1.7rem; flex:none; }
+  .module-icon img{ width:42px; height:42px; object-fit:contain; display:block; }
+  .brand-icon{ height:1em; width:1em; object-fit:contain; vertical-align:-0.15em; margin-right:5px; }
+  .about-hero-icon{ width:52px; height:52px; object-fit:contain; }
+  .lucide-icon{ width:20px; height:20px; stroke-width:2.2; vertical-align:middle; }
   .module-txt{ flex:1; }
   .module-txt h3{ font-family:inherit; font-size:1rem; margin-bottom:2px; }
   .module-txt p{ font-size:0.8rem; color:var(--tide); margin:0; }
@@ -252,21 +256,21 @@
 
 <div id="sideMenuOverlay"></div>
 <nav id="sideMenu">
-  <div class="side-menu-title">🦀 KUKA</div>
+  <div class="side-menu-title"><img src="./mudcrab-icon.png" class="brand-icon" alt=""> KUKA</div>
   <span class="side-menu-version" id="sideMenuVersion">v—</span>
-  <button class="side-menu-item" data-nav="home"><span class="ic">🏠</span><span>Home</span></button>
-  <button class="side-menu-item" data-nav="sync"><span class="ic">☁️</span><span>Synchronization</span></button>
-  <button class="side-menu-item" data-nav="admin" id="sideMenuAdminBtn" style="display:none;"><span class="ic">📊</span><span>Admin</span></button>
-  <button class="side-menu-item" data-nav="settings"><span class="ic">⚙️</span><span>Settings</span></button>
-  <button class="side-menu-item" data-nav="help"><span class="ic">❓</span><span>Help</span></button>
-  <button class="side-menu-item" data-nav="about"><span class="ic">ℹ️</span><span>About</span></button>
-  <button class="side-menu-item" id="sideMenuAuthBtn"><span class="ic">🔒</span><span id="sideMenuAuthLabel">Login</span></button>
+  <button class="side-menu-item" data-nav="home"><span class="ic"><i data-lucide="home" class="lucide-icon"></i></span><span>Home</span></button>
+  <button class="side-menu-item" data-nav="sync"><span class="ic"><i data-lucide="cloud-upload" class="lucide-icon"></i></span><span>Synchronization</span></button>
+  <button class="side-menu-item" data-nav="admin" id="sideMenuAdminBtn" style="display:none;"><span class="ic"><i data-lucide="bar-chart-3" class="lucide-icon"></i></span><span>Admin</span></button>
+  <button class="side-menu-item" data-nav="settings"><span class="ic"><i data-lucide="settings" class="lucide-icon"></i></span><span>Settings</span></button>
+  <button class="side-menu-item" data-nav="help"><span class="ic"><i data-lucide="help-circle" class="lucide-icon"></i></span><span>Help</span></button>
+  <button class="side-menu-item" data-nav="about"><span class="ic"><i data-lucide="info" class="lucide-icon"></i></span><span>About</span></button>
+  <button class="side-menu-item" id="sideMenuAuthBtn"><span class="ic"><i data-lucide="lock" class="lucide-icon" id="sideMenuAuthIcon"></i></span><span id="sideMenuAuthLabel">Login</span></button>
 </nav>
 
 <header id="topbar">
-  <button class="icon-btn" id="hamburgerBtn" aria-label="Menu">☰</button>
+  <button class="icon-btn" id="hamburgerBtn" aria-label="Menu"><i data-lucide="menu" class="lucide-icon"></i></button>
   <div class="topbar-title" id="topbarTitle">Home</div>
-  <button class="icon-btn" id="homeBtn" aria-label="Home">🏠</button>
+  <button class="icon-btn" id="homeBtn" aria-label="Home"><i data-lucide="home" class="lucide-icon"></i></button>
 </header>
 
 <div id="statusbar">
@@ -278,18 +282,18 @@
 
   <section class="mainview active" id="view-home">
     <div class="home-hero">
-      <h1>🦀 KUKA</h1>
+      <h1><img src="./mudcrab-icon.png" class="brand-icon" alt=""> KUKA</h1>
       <p>A Fisheries Survey App</p>
     </div>
     <div class="eyebrow">Fisheries Survey</div>
     <h2 style="margin-bottom:14px;">Choose a survey module</h2>
     <div class="module-card" data-openmodule="mudcrab">
-      <div class="module-icon">🦀</div>
+      <div class="module-icon"><img src="./mudcrab-icon.png" alt="Mud Crab"></div>
       <div class="module-txt"><h3>Mud Crab Survey</h3><p>Mud Crab Data Collection — quadrat-based stock assessment</p></div>
       <div class="module-arrow">▶</div>
     </div>
     <div class="module-card" data-openmodule="coconutcrab">
-      <div class="module-icon">🥥</div>
+      <div class="module-icon"><img src="./coconutcrab-icon.png" alt="Coconut Crab"></div>
       <div class="module-txt"><h3>Coconut Crab Survey</h3><p>Biological Data Collection · Socio-economic Data Collection</p></div>
       <div class="module-arrow">▶</div>
     </div>
@@ -360,7 +364,7 @@
           <label class="first">Comments</label>
           <textarea id="f_comments" placeholder="Weather, disturbances, anything unusual…"></textarea>
           <label>GPS Location</label>
-          <button class="btn btn-secondary btn-block" id="gpsBtn" type="button">📍 Capture GPS location</button>
+          <button class="btn btn-secondary btn-block" id="gpsBtn" type="button"><i data-lucide="map-pin" class="lucide-icon"></i> Capture GPS location</button>
           <div class="gps-readout" id="gpsReadout">Not captured yet</div>
           <div class="gps-map" id="gpsMap"></div>
           <p class="help">One GPS reading is captured for the entire survey.</p>
@@ -908,7 +912,7 @@
             <textarea id="bio_comments" placeholder="Weather, disturbances, anything unusual…"></textarea>
 
             <label>GPS Location</label>
-            <button class="btn btn-secondary btn-block" id="bioGpsBtn" type="button">📍 Capture GPS location</button>
+            <button class="btn btn-secondary btn-block" id="bioGpsBtn" type="button"><i data-lucide="map-pin" class="lucide-icon"></i> Capture GPS location</button>
             <div class="gps-readout" id="bioGpsReadout">Not captured yet</div>
             <div class="gps-map" id="bioGpsMap"></div>
             <p class="help">One GPS reading is captured for the entire survey.</p>
@@ -978,7 +982,7 @@
     <h2 style="margin-bottom:14px;">Dashboard</h2>
     <p class="help" style="margin-bottom:14px;">Data from every surveyor's synced surveys, pulled directly from your KUKA account.</p>
 
-    <button class="btn btn-secondary btn-block" id="adminRefreshBtn" type="button" style="margin-bottom:14px;">🔄 Refresh</button>
+    <button class="btn btn-secondary btn-block" id="adminRefreshBtn" type="button" style="margin-bottom:14px;"><i data-lucide="refresh-cw" class="lucide-icon"></i> Refresh</button>
 
     <div class="stat-row">
       <div class="stat"><div class="n" id="admin_statTotal">—</div><div class="l">Total surveys</div></div>
@@ -1077,6 +1081,7 @@
     <div class="card">
       <h3>Saving Your Work</h3>
       <p class="help">Tap Save Draft at any point to save your progress without submitting — this is the only time your in-progress work is written to storage, so Records only ever shows drafts you deliberately chose to save. After saving, you'll be asked whether to keep editing, view Records, or go Home. Saved drafts appear in that survey's Records tab, badged "Draft," with a Continue button so you can pick up exactly where you left off. Submitted surveys stay safely on your device until you sync them — nothing is lost by being offline.</p>
+      <p class="help" style="margin-top:8px;">If you try to leave a survey partway through — using Home, the side menu, or your phone's back button — without saving first, KUKA will warn you and offer to save a draft before continuing, so you don't lose work by accident.</p>
     </div>
 
     <div class="card">
@@ -1140,7 +1145,7 @@
     <h2 style="margin-bottom:14px;">About</h2>
 
     <div class="card" style="text-align:center; padding:28px 20px;">
-      <div style="font-size:2.2rem; margin-bottom:6px;">🦀</div>
+      <img src="./mudcrab-icon.png" class="about-hero-icon" alt="" style="margin-bottom:6px;">
       <h2 style="margin-bottom:2px;">KUKA</h2>
       <p class="help" id="aboutVersionLabel">Version —</p>
     </div>
@@ -1174,7 +1179,7 @@
 
   <section class="mainview" id="view-login">
     <div class="loginCard">
-      <h1>🦀 KUKA</h1>
+      <h1><img src="./mudcrab-icon.png" class="brand-icon" alt=""> KUKA</h1>
       <p class="authSub">Fisheries survey platform — Papua New Guinea</p>
       <div id="authError"></div>
       <div id="authNameField" style="display:none;">
@@ -1224,6 +1229,18 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="leaveWarningModal">
+  <div class="modal-card">
+    <h3>Unsaved Work</h3>
+    <p>You have a survey in progress that hasn't been saved. If you leave now without saving, this data will not be available to continue later.</p>
+    <div class="modal-actions" style="flex-direction:column; gap:8px;">
+      <button class="btn btn-primary btn-block" id="leaveModalSave">Save Draft &amp; Continue</button>
+      <button class="btn btn-danger btn-block" id="leaveModalDiscard">Discard &amp; Continue</button>
+      <button class="btn btn-ghost btn-block" id="leaveModalCancel">Cancel — Stay Here</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="draftSavedModal">
   <div class="modal-card">
     <h3>Draft Saved</h3>
@@ -1238,7 +1255,7 @@
 
 <div id="setPasswordScreen">
   <div class="authCard">
-    <h1>🦀 KUKA</h1>
+    <h1><img src="./mudcrab-icon.png" class="brand-icon" alt=""> KUKA</h1>
     <p class="authSub">Set your password to finish creating your account</p>
     <div id="setPasswordError"></div>
     <label class="first">New Password</label>
@@ -1254,8 +1271,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <script>
-const APP_VERSION = "3.4.0";
+const APP_VERSION = "3.6.0";
 const SUPABASE_URL = "https://spwdpzcuyrwjdhvluadu.supabase.co";
 const ADMIN_EMAIL = "ronnisnai123@gmail.com";
 function isAdmin(){ return !!(currentUser && currentUser.email === ADMIN_EMAIL); }
@@ -1306,17 +1324,31 @@ const VIEW_TITLES = {
   home:'Home', mudcrab:'Mud Crab Survey', coconut:'Coconut Crab Survey',
   sync:'Synchronization', settings:'Settings', help:'Help', about:'About', login:'Login', admin:'Admin Dashboard'
 };
-function showMainView(id){
+let currentMainView = 'home';
+function showMainView(id, fromPopstate){
   document.querySelectorAll('.mainview').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+id).classList.add('active');
   document.getElementById('topbarTitle').textContent = VIEW_TITLES[id] || 'KUKA';
   closeSideMenu();
   updateWizardNavVisibility();
   window.scrollTo(0,0);
+  if(!fromPopstate && id !== currentMainView){
+    history.pushState({ view:id }, '', '');
+  }
+  currentMainView = id;
   if(id === 'mudcrab'){ refreshRecords('mudcrab'); }
   if(id === 'coconut'){ refreshRecords('socioeconomic'); refreshRecords('biological'); }
   if(id === 'sync'){ refreshSyncTab(); }
 }
+window.addEventListener('popstate', function(e){
+  const targetView = (e.state && e.state.view) || 'home';
+  if(anyWizardCurrentlyOpen()){
+    history.pushState({ view: currentMainView }, '', '');
+    attemptLeave(function(){ showMainView(targetView, true); });
+  } else {
+    showMainView(targetView, true);
+  }
+});
 
 function openSideMenu(){
   document.getElementById('sideMenu').classList.add('open');
@@ -1328,7 +1360,7 @@ function closeSideMenu(){
 }
 document.getElementById('hamburgerBtn').addEventListener('click', openSideMenu);
 document.getElementById('sideMenuOverlay').addEventListener('click', closeSideMenu);
-document.getElementById('homeBtn').addEventListener('click', ()=> showMainView('home'));
+document.getElementById('homeBtn').addEventListener('click', ()=> attemptLeave(function(){ showMainView('home'); }));
 
 document.querySelectorAll('.side-menu-item[data-nav]').forEach(el=>{
   el.addEventListener('click', ()=>{
@@ -1342,8 +1374,10 @@ document.querySelectorAll('.side-menu-item[data-nav]').forEach(el=>{
       closeSideMenu();
       return;
     }
-    showMainView(target);
-    if(target === 'admin'){ loadAdminDashboard(); }
+    attemptLeave(function(){
+      showMainView(target);
+      if(target === 'admin'){ loadAdminDashboard(); }
+    });
   });
 });
 document.getElementById('sideMenuAuthBtn').addEventListener('click', async ()=>{
@@ -1494,7 +1528,7 @@ document.getElementById('coconutPlaceholderBack').addEventListener('click', ()=>
 });
 
 document.querySelectorAll('.module-back[data-nav="home"]').forEach(el=>{
-  el.addEventListener('click', ()=> showMainView('home'));
+  el.addEventListener('click', ()=> attemptLeave(function(){ showMainView('home'); }));
 });
 
 function authErr(msg){
@@ -1630,6 +1664,8 @@ async function applyLoggedInState(user){
   document.getElementById('signedInCard').style.display = 'block';
   document.getElementById('sideMenuAuthLabel').textContent = 'Logout';
   document.getElementById('sideMenuAdminBtn').style.display = isAdmin() ? 'flex' : 'none';
+  document.querySelector('#sideMenuAuthBtn .ic').innerHTML = '<i data-lucide="log-out" class="lucide-icon"></i>';
+  refreshLucideIcons();
   if(!name){
     name = await syncFullNameFromRequest(user);
     if(name) document.getElementById('userEmailLabel').textContent = name + ' · ' + user.email;
@@ -1640,6 +1676,8 @@ function applyLoggedOutState(){
   document.getElementById('signedInCard').style.display = 'none';
   document.getElementById('sideMenuAuthLabel').textContent = 'Login';
   document.getElementById('sideMenuAdminBtn').style.display = 'none';
+  document.querySelector('#sideMenuAuthBtn .ic').innerHTML = '<i data-lucide="log-in" class="lucide-icon"></i>';
+  refreshLucideIcons();
 }
 
 supabaseClient.auth.onAuthStateChange(async (event, session)=>{
@@ -1752,6 +1790,10 @@ function showGpsMap(kind, lat, lon){
       setTimeout(function(){ bioLeafletMap.invalidateSize(); }, 100);
     }
   }catch(e){ /* map tiles unavailable offline — coordinates are still saved as text */ }
+}
+
+function refreshLucideIcons(){
+  if(typeof lucide !== 'undefined'){ lucide.createIcons(); }
 }
 
 function downscaleImage(file, maxWidth, quality){
@@ -1884,19 +1926,22 @@ function pushDraftIntoForm(){
 
 let mcDraftId = null;
 let autosaveTimer = null;
-function autosaveDraft(showToast){
+function autosaveDraft(showToast, skipModal){
   pullFormIntoDraft();
-  if(!showToast) return;
+  if(!showToast) return Promise.resolve();
   clearTimeout(autosaveTimer);
-  autosaveTimer = setTimeout(async function(){
-    if(!mcDraftId) mcDraftId = uid('srv');
-    draft.lastStep = currentStep;
-    const record = Object.assign({}, draft, { id: mcDraftId, surveyType:'mudcrab', status:'draft', synced:false, savedAt: new Date().toISOString() });
-    await idbPut('surveys', record);
-    toast('Draft saved');
-    refreshUnsyncedBadge();
-    openDraftSavedModal('mudcrab');
-  }, 0);
+  return new Promise(function(resolve){
+    autosaveTimer = setTimeout(async function(){
+      if(!mcDraftId) mcDraftId = uid('srv');
+      draft.lastStep = currentStep;
+      const record = Object.assign({}, draft, { id: mcDraftId, surveyType:'mudcrab', status:'draft', synced:false, savedAt: new Date().toISOString() });
+      await idbPut('surveys', record);
+      toast('Draft saved');
+      refreshUnsyncedBadge();
+      if(!skipModal) openDraftSavedModal('mudcrab');
+      resolve();
+    }, 0);
+  });
 }
 document.querySelectorAll('#view-mudcrab input, #view-mudcrab select, #view-mudcrab textarea').forEach(function(el){
   el.addEventListener('input', function(){autosaveDraft(false);});
@@ -2041,6 +2086,7 @@ function renderQuadList(){
       autosaveDraft(false);
     });
   });
+  refreshLucideIcons();
 }
 function renderCrabEntry(quadId, c, idx){
   const u = getUnits();
@@ -2078,7 +2124,7 @@ function renderCrabEntry(quadId, c, idx){
       ('<img src="'+c.photo+'" class="specimen-photo">'+
        '<button class="btn-ghost" type="button" data-removephoto="'+c.id+'" data-qid="'+quadId+'" style="margin-top:6px;">Remove photo</button>')
       :
-      ('<label class="btn btn-secondary btn-block photo-upload-label" for="photoInput_'+c.id+'">📷 Add photo</label>'+
+      ('<label class="btn btn-secondary btn-block photo-upload-label" for="photoInput_'+c.id+'"><i data-lucide="camera" class="lucide-icon"></i> Add photo</label>'+
        '<input type="file" accept="image/*" capture="environment" id="photoInput_'+c.id+'" data-photoinput="'+c.id+'" data-qid="'+quadId+'" style="display:none;">')
     ) +
   '</div>';
@@ -2157,6 +2203,37 @@ function continueDraft(proceedFn){
     proceedFn();
   }
 }
+
+function saveCurrentActiveDraftSkipModal(){
+  if(isMudcrabSurveyTabActive()) return autosaveDraft(true, true);
+  if(isSocioSurveyTabActive()) return autosaveSeDraft(true, true);
+  if(isBioSurveyTabActive()) return autosaveBioDraft(true, true);
+  return Promise.resolve();
+}
+
+let pendingLeaveNavigate = null;
+function attemptLeave(navigateFn){
+  if(!anyWizardCurrentlyOpen()){ navigateFn(); return; }
+  closeSideMenu();
+  pendingLeaveNavigate = navigateFn;
+  document.getElementById('leaveWarningModal').classList.add('show');
+}
+function closeLeaveWarningModal(){
+  document.getElementById('leaveWarningModal').classList.remove('show');
+  pendingLeaveNavigate = null;
+}
+document.getElementById('leaveModalSave').addEventListener('click', async function(){
+  const nav = pendingLeaveNavigate;
+  await saveCurrentActiveDraftSkipModal();
+  closeLeaveWarningModal();
+  if(nav) nav();
+});
+document.getElementById('leaveModalDiscard').addEventListener('click', function(){
+  const nav = pendingLeaveNavigate;
+  closeLeaveWarningModal();
+  if(nav) nav();
+});
+document.getElementById('leaveModalCancel').addEventListener('click', closeLeaveWarningModal);
 
 async function refreshRecords(type){
   const all = await idbGetAll('surveys');
@@ -2973,19 +3050,22 @@ document.getElementById('socioWizard').addEventListener('change', function(e){
 });
 
 let seAutosaveTimer = null;
-function autosaveSeDraft(showToast){
+function autosaveSeDraft(showToast, skipModal){
   pullAllSeFields();
-  if(!showToast) return;
+  if(!showToast) return Promise.resolve();
   clearTimeout(seAutosaveTimer);
-  seAutosaveTimer = setTimeout(async function(){
-    if(!seDraftId) seDraftId = uid('srv');
-    seDraft.lastStep = seStep;
-    const record = Object.assign({}, seDraft, { id: seDraftId, surveyType:'socioeconomic', status:'draft', synced:false, savedAt: new Date().toISOString() });
-    await idbPut('surveys', record);
-    toast('Draft saved');
-    refreshUnsyncedBadge();
-    openDraftSavedModal('socioeconomic');
-  }, 0);
+  return new Promise(function(resolve){
+    seAutosaveTimer = setTimeout(async function(){
+      if(!seDraftId) seDraftId = uid('srv');
+      seDraft.lastStep = seStep;
+      const record = Object.assign({}, seDraft, { id: seDraftId, surveyType:'socioeconomic', status:'draft', synced:false, savedAt: new Date().toISOString() });
+      await idbPut('surveys', record);
+      toast('Draft saved');
+      refreshUnsyncedBadge();
+      if(!skipModal) openDraftSavedModal('socioeconomic');
+      resolve();
+    }, 0);
+  });
 }
 
 function isSocioSurveyTabActive(){
@@ -3241,19 +3321,22 @@ function pushBioDraftIntoForm(){
 }
 
 let bioAutosaveTimer = null;
-function autosaveBioDraft(showToast){
+function autosaveBioDraft(showToast, skipModal){
   pullBioFormIntoDraft();
-  if(!showToast) return;
+  if(!showToast) return Promise.resolve();
   clearTimeout(bioAutosaveTimer);
-  bioAutosaveTimer = setTimeout(async function(){
-    if(!bioDraftId) bioDraftId = uid('srv');
-    bioDraft.lastStep = bioStep;
-    const record = Object.assign({}, bioDraft, { id: bioDraftId, surveyType:'biological', status:'draft', synced:false, savedAt: new Date().toISOString() });
-    await idbPut('surveys', record);
-    toast('Draft saved');
-    refreshUnsyncedBadge();
-    openDraftSavedModal('biological');
-  }, 0);
+  return new Promise(function(resolve){
+    bioAutosaveTimer = setTimeout(async function(){
+      if(!bioDraftId) bioDraftId = uid('srv');
+      bioDraft.lastStep = bioStep;
+      const record = Object.assign({}, bioDraft, { id: bioDraftId, surveyType:'biological', status:'draft', synced:false, savedAt: new Date().toISOString() });
+      await idbPut('surveys', record);
+      toast('Draft saved');
+      refreshUnsyncedBadge();
+      if(!skipModal) openDraftSavedModal('biological');
+      resolve();
+    }, 0);
+  });
 }
 document.getElementById('bioWizard').addEventListener('input', function(e){ autosaveBioDraft(false); if(['bio_llg','bio_samplingSite'].indexOf(e.target.id)!==-1) clearFieldError(e.target.id); });
 document.getElementById('bioWizard').addEventListener('change', function(e){ autosaveBioDraft(false); if(['bio_surveyor1','bio_surveyor2','bio_province'].indexOf(e.target.id)!==-1) clearFieldError(e.target.id); });
@@ -3422,6 +3505,7 @@ function renderBaitList(){
       autosaveBioDraft(false);
     });
   });
+  refreshLucideIcons();
 }
 function renderBioCrabEntry(baitId, c, idx){
   const u = getUnits();
@@ -3456,7 +3540,7 @@ function renderBioCrabEntry(baitId, c, idx){
       ('<img src="'+c.photo+'" class="specimen-photo">'+
        '<button class="btn-ghost" type="button" data-removebiophoto="'+c.id+'" data-bid2="'+baitId+'" style="margin-top:6px;">Remove photo</button>')
       :
-      ('<label class="btn btn-secondary btn-block photo-upload-label" for="bioPhotoInput_'+c.id+'">📷 Add photo</label>'+
+      ('<label class="btn btn-secondary btn-block photo-upload-label" for="bioPhotoInput_'+c.id+'"><i data-lucide="camera" class="lucide-icon"></i> Add photo</label>'+
        '<input type="file" accept="image/*" capture="environment" id="bioPhotoInput_'+c.id+'" data-biophotoinput="'+c.id+'" data-bid2="'+baitId+'" style="display:none;">')
     ) +
   '</div>';
@@ -3564,6 +3648,8 @@ async function submitBioSurvey(){
 }
 
 (async function init(){
+  history.replaceState({ view:'home' }, '', '');
+
   const isInviteFlow = await checkForInviteLink();
 
   if(!isInviteFlow){
@@ -3586,6 +3672,7 @@ async function submitBioSurvey(){
   goToStep(1);
 
   showMainView('home');
+  refreshLucideIcons();
 })();
 
 let swRegistration = null;
