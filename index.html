@@ -282,18 +282,18 @@
 
   <section class="mainview active" id="view-home">
     <div class="home-hero">
-      <h1><img src="./mudcrab-icon.png" class="brand-icon" alt=""> KUKA</h1>
+      <h1>KUKA</h1>
       <p>A Fisheries Survey App</p>
     </div>
     <div class="eyebrow">Fisheries Survey</div>
     <h2 style="margin-bottom:14px;">Choose a survey module</h2>
     <div class="module-card" data-openmodule="mudcrab">
-      <div class="module-icon"><img src="./mudcrab-icon.png" alt="Mud Crab"></div>
+      <div class="module-icon"><img src="./coconutcrab-icon.png" alt="Mud Crab"></div>
       <div class="module-txt"><h3>Mud Crab Survey</h3><p>Mud Crab Data Collection — quadrat-based stock assessment</p></div>
       <div class="module-arrow">▶</div>
     </div>
     <div class="module-card" data-openmodule="coconutcrab">
-      <div class="module-icon"><img src="./coconutcrab-icon.png" alt="Coconut Crab"></div>
+      <div class="module-icon"><img src="./mudcrab-icon.png" alt="Coconut Crab"></div>
       <div class="module-txt"><h3>Coconut Crab Survey</h3><p>Biological Data Collection · Socio-economic Data Collection</p></div>
       <div class="module-arrow">▶</div>
     </div>
@@ -1273,7 +1273,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <script>
-const APP_VERSION = "3.6.0";
+const APP_VERSION = "3.6.1";
 const SUPABASE_URL = "https://spwdpzcuyrwjdhvluadu.supabase.co";
 const ADMIN_EMAIL = "ronnisnai123@gmail.com";
 function isAdmin(){ return !!(currentUser && currentUser.email === ADMIN_EMAIL); }
