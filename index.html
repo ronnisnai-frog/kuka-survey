@@ -406,12 +406,12 @@
       <div id="coconutList">
         <h2 style="margin-bottom:14px;">Choose a form</h2>
         <div class="module-card" id="openBiological">
-          <div class="module-icon">🧬</div>
+          <div class="module-icon"><img src="./mudcrab-icon.png" alt="Biological Survey"></div>
           <div class="module-txt"><h3>Biological Survey</h3><p>Bait stations &amp; coconut crab measurements</p></div>
           <div class="module-arrow">▶</div>
         </div>
         <div class="module-card" id="openSocioeconomic">
-          <div class="module-icon">👥</div>
+          <div class="module-icon"><i data-lucide="users" style="width:36px; height:36px; stroke-width:1.8; color:var(--shell);"></i></div>
           <div class="module-txt"><h3>Socio-economic Survey</h3><p>Livelihood, harvesting, market &amp; local knowledge survey</p></div>
           <div class="module-arrow">▶</div>
         </div>
@@ -1273,7 +1273,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <script>
-const APP_VERSION = "3.6.1";
+const APP_VERSION = "3.6.2";
 const SUPABASE_URL = "https://spwdpzcuyrwjdhvluadu.supabase.co";
 const ADMIN_EMAIL = "ronnisnai123@gmail.com";
 function isAdmin(){ return !!(currentUser && currentUser.email === ADMIN_EMAIL); }
