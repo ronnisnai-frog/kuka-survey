@@ -1003,8 +1003,14 @@
     </div>
 
     <div class="card">
-      <h3>Recent Submissions</h3>
+      <h3>All Submissions</h3>
+      <p class="help">Tick the ones you want, then export just those — or use Select All below.</p>
+      <div style="display:flex; gap:8px; margin:10px 0;">
+        <button class="btn-ghost" id="adminSelectAllBtn" type="button">Select All</button>
+        <button class="btn-ghost" id="adminSelectNoneBtn" type="button">Select None</button>
+      </div>
       <div id="admin_recentList"><p class="help">Tap Refresh to load.</p></div>
+      <button class="btn btn-primary btn-block" id="adminExportSelectedBtn" type="button" style="margin-top:14px;">Export Selected (<span id="admin_selectedCount">0</span>) as Excel</button>
     </div>
   </section>
 
@@ -1273,7 +1279,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <script>
-const APP_VERSION = "3.6.2";
+const APP_VERSION = "3.7.0";
 const SUPABASE_URL = "https://spwdpzcuyrwjdhvluadu.supabase.co";
 const ADMIN_EMAIL = "ronnisnai123@gmail.com";
 function isAdmin(){ return !!(currentUser && currentUser.email === ADMIN_EMAIL); }
@@ -2597,6 +2603,9 @@ function getAdminProvince(row){
   if(row.data && row.data.resp_province) return row.data.resp_province;
   return 'Unknown';
 }
+let adminAllRows = [];
+let adminSelectedIds = {};
+
 async function loadAdminDashboard(){
   if(!isAdmin()) return;
   document.getElementById('admin_provinceBreakdown').innerHTML = '<p class="help">Loading…</p>';
@@ -2609,6 +2618,9 @@ async function loadAdminDashboard(){
       return;
     }
     const rows = result.data || [];
+    adminAllRows = rows;
+    adminSelectedIds = {};
+    updateAdminSelectedCount();
     const mc = rows.filter(function(r){return r.survey_type === 'mudcrab';});
     const se = rows.filter(function(r){return r.survey_type === 'socioeconomic';});
     const bio = rows.filter(function(r){return r.survey_type === 'biological';});
@@ -2626,38 +2638,56 @@ async function loadAdminDashboard(){
       .map(function(p){ return '<div class="review-line"><span class="k">'+escapeHtml(p)+'</span><span class="v">'+provinceCounts[p]+'</span></div>'; }).join('');
     document.getElementById('admin_provinceBreakdown').innerHTML = provinceHtml || '<p class="help">No data yet.</p>';
 
-    const recent = rows.slice(0, 30);
-    const recentWrap = document.getElementById('admin_recentList');
-    recentWrap.innerHTML = '';
-    if(recent.length === 0){
-      recentWrap.innerHTML = '<p class="help">No submissions yet.</p>';
-    } else {
-      recent.forEach(function(r){
-        const label = r.sampling_site || (r.data && (r.data.resp_fullname || r.data.site)) || 'Untitled';
-        const typeLabel = r.survey_type === 'mudcrab' ? 'Mud Crab' : (r.survey_type === 'socioeconomic' ? 'Socio-economic' : 'Biological');
-        const div = document.createElement('div');
-        div.className = 'record-card';
-        div.innerHTML = '<div class="record-top"><div><h3>'+escapeHtml(label)+'</h3></div><span class="badge synced">'+typeLabel+'</span></div>'+
-          '<div class="record-meta">'+(r.survey_date||'')+' · Surveyor: '+escapeHtml(r.surveyor1||'—')+'</div>';
-        recentWrap.appendChild(div);
-      });
-    }
+    renderAdminRecentList();
   } catch(err){
     document.getElementById('admin_provinceBreakdown').innerHTML = '<p class="help">Could not load data. Check your connection and try again.</p>';
     document.getElementById('admin_recentList').innerHTML = '';
   }
 }
+function renderAdminRecentList(){
+  const recentWrap = document.getElementById('admin_recentList');
+  recentWrap.innerHTML = '';
+  if(adminAllRows.length === 0){
+    recentWrap.innerHTML = '<p class="help">No submissions yet.</p>';
+    return;
+  }
+  adminAllRows.forEach(function(r){
+    const label = r.sampling_site || (r.data && (r.data.resp_fullname || r.data.site)) || 'Untitled';
+    const typeLabel = r.survey_type === 'mudcrab' ? 'Mud Crab' : (r.survey_type === 'socioeconomic' ? 'Socio-economic' : 'Biological');
+    const div = document.createElement('div');
+    div.className = 'record-card';
+    div.innerHTML = '<div class="record-top" style="align-items:center;">'+
+      '<label style="display:flex; align-items:center; gap:10px; flex:1; cursor:pointer;">'+
+      '<input type="checkbox" data-adminrow="'+r.id+'" style="width:20px; height:20px; flex:none; accent-color:var(--shell);" '+(adminSelectedIds[r.id]?'checked':'')+'>'+
+      '<h3 style="margin:0;">'+escapeHtml(label)+'</h3></label>'+
+      '<span class="badge synced">'+typeLabel+'</span></div>'+
+      '<div class="record-meta">'+(r.survey_date||'')+' · Surveyor: '+escapeHtml(r.surveyor1||'—')+'</div>';
+    recentWrap.appendChild(div);
+  });
+  recentWrap.querySelectorAll('[data-adminrow]').forEach(function(el){
+    el.addEventListener('change', function(e){
+      if(e.target.checked){ adminSelectedIds[e.target.dataset.adminrow] = true; }
+      else{ delete adminSelectedIds[e.target.dataset.adminrow]; }
+      updateAdminSelectedCount();
+    });
+  });
+}
+function updateAdminSelectedCount(){
+  document.getElementById('admin_selectedCount').textContent = Object.keys(adminSelectedIds).length;
+}
+document.getElementById('adminSelectAllBtn').addEventListener('click', function(){
+  adminAllRows.forEach(function(r){ adminSelectedIds[r.id] = true; });
+  renderAdminRecentList();
+  updateAdminSelectedCount();
+});
+document.getElementById('adminSelectNoneBtn').addEventListener('click', function(){
+  adminSelectedIds = {};
+  renderAdminRecentList();
+  updateAdminSelectedCount();
+});
 document.getElementById('adminRefreshBtn').addEventListener('click', loadAdminDashboard);
 
-document.getElementById('adminExportBtn').addEventListener('click', async function(){
-  if(!isAdmin()) return;
-  if(typeof XLSX === 'undefined'){ toast('Excel export needs an internet connection the first time (loading library).'); return; }
-  toast('Fetching all surveyor data…');
-  const result = await supabaseClient.from('surveys').select('*').order('submitted_at', { ascending:false });
-  if(result.error){ toast('Could not fetch data: '+result.error.message); return; }
-  const rows = result.data || [];
-  if(rows.length === 0){ toast('No synced surveys to export yet.'); return; }
-
+function buildAdminWorkbook(rows){
   const wb = XLSX.utils.book_new();
   const mc = rows.filter(function(r){return r.survey_type === 'mudcrab';});
   const se = rows.filter(function(r){return r.survey_type === 'socioeconomic';});
@@ -2679,7 +2709,7 @@ document.getElementById('adminExportBtn').addEventListener('click', async functi
     });
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     ws['!cols'] = headers.map(function(){return {wch:16};});
-    XLSX.utils.book_append_sheet(wb, ws, 'Mud Crab (All Surveyors)');
+    XLSX.utils.book_append_sheet(wb, ws, 'Mud Crab');
   }
 
   if(se.length > 0){
@@ -2691,7 +2721,7 @@ document.getElementById('adminExportBtn').addEventListener('click', async functi
     });
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     ws['!cols'] = headers.map(function(){return {wch:18};});
-    XLSX.utils.book_append_sheet(wb, ws, 'Socio-economic (All Surveyors)');
+    XLSX.utils.book_append_sheet(wb, ws, 'Socio-economic');
   }
 
   if(bio.length > 0){
@@ -2711,11 +2741,33 @@ document.getElementById('adminExportBtn').addEventListener('click', async functi
     });
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     ws['!cols'] = headers.map(function(){return {wch:16};});
-    XLSX.utils.book_append_sheet(wb, ws, 'Biological (All Surveyors)');
+    XLSX.utils.book_append_sheet(wb, ws, 'Biological');
   }
+  return wb;
+}
 
+document.getElementById('adminExportBtn').addEventListener('click', async function(){
+  if(!isAdmin()) return;
+  if(typeof XLSX === 'undefined'){ toast('Excel export needs an internet connection the first time (loading library).'); return; }
+  toast('Fetching all surveyor data…');
+  const result = await supabaseClient.from('surveys').select('*').order('submitted_at', { ascending:false });
+  if(result.error){ toast('Could not fetch data: '+result.error.message); return; }
+  const rows = result.data || [];
+  if(rows.length === 0){ toast('No synced surveys to export yet.'); return; }
+  const wb = buildAdminWorkbook(rows);
   XLSX.writeFile(wb, 'kuka_all_surveyors_'+Date.now()+'.xlsx');
   toast('Export complete — '+rows.length+' total surveys');
+});
+
+document.getElementById('adminExportSelectedBtn').addEventListener('click', function(){
+  if(!isAdmin()) return;
+  if(typeof XLSX === 'undefined'){ toast('Excel export needs an internet connection the first time (loading library).'); return; }
+  const ids = Object.keys(adminSelectedIds);
+  if(ids.length === 0){ toast('Tick at least one survey to export.'); return; }
+  const selectedRows = adminAllRows.filter(function(r){ return adminSelectedIds[r.id]; });
+  const wb = buildAdminWorkbook(selectedRows);
+  XLSX.writeFile(wb, 'kuka_selected_surveys_'+Date.now()+'.xlsx');
+  toast('Export complete — '+selectedRows.length+' selected survey'+(selectedRows.length===1?'':'s'));
 });
 
 async function refreshSyncTab(){
